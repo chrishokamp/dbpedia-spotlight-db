@@ -8,14 +8,16 @@ import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
 import java.io.{InputStream, FileInputStream, File}
 import org.apache.commons.logging.LogFactory
+import java.util
+
+import scala.Array
 
 
 /**
- * @author Joachim Daiber
+ * @author Joachim Daiber, Chris Hokamp - additions to facilitate tfidf indexing
  *
  *
- *
- */
+ **/
 
 object TokenSource {
 
@@ -49,6 +51,7 @@ object TokenSource {
     var i = 0
     TokenOccurrenceSource.plainTokenOccurrenceSource(tokenFile) foreach {
       p: Triple[String, Array[String], Array[Int]] => {
+
         i += 1
         if (i % 10000 == 0)
           LOG.info("Read context for %d resources...".format(i))
@@ -66,6 +69,57 @@ object TokenSource {
         (new Token(id, token, count), count)
       }
     }.toMap.asJava
+
   }
+
+
+  def dfFromPigFile(tokenFile: File) = fromPigInputStreamWithDocFreq(new FileInputStream(tokenFile))
+  //In this method, count is the docFreq in the corpus
+  def fromPigInputStreamWithDocFreq (tokenFile: InputStream): java.util.Map[Token, Int] = {
+    //val tokenMap = HashMap[String, Int]()
+
+    val docFreq = HashMap[String, Int]()
+
+    var i = 0
+    TokenOccurrenceSource.plainTokenOccurrenceSource(tokenFile) foreach {
+      p: Triple[String, Array[String], Array[Int]] => {
+
+        val docTokens = p._2.toSet
+
+        i += 1
+        if (i % 10000 == 0)
+          LOG.info("Read context for %d resources...".format(i))
+        /*
+        (0 to p._2.size -1).foreach {
+          i: Int => tokenMap.put(p._2(i), tokenMap.getOrElse(p._2(i), 0) + p._3(i))
+        }
+        */
+        docTokens.foreach {
+          tok: String => docFreq.put(tok, docFreq.getOrElse(tok, 0)+1)
+        }
+      }
+      /*
+      //TEST
+      System.out.println("testing docFreq...")
+      docFreq.map {
+        case(token, count) => {
+          if (token.equals("and") || token.equals("chris")) {
+            System.out.println("token is: " + token + " freq is: " + count)
+          }
+        }
+      }
+      */
+    }
+
+    var id = -1
+    docFreq.map{
+      case(token, count) => {
+        id += 1
+        (new Token(id, token, count), count.toInt)
+      }
+    }.toMap.asJava
+
+  }
+
 
 }

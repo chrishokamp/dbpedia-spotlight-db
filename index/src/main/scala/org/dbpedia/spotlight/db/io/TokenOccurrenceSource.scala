@@ -9,6 +9,11 @@ import org.apache.commons.logging.LogFactory
 import scala.Predef._
 import scala.Array
 import org.dbpedia.spotlight.exceptions.{DBpediaResourceNotFoundException, NotADBpediaResourceException}
+import org.omg.CORBA._PolicyStub
+
+//import collection.immutable.HashMap
+
+import collection.mutable.HashMap
 
 
 /**
@@ -47,11 +52,46 @@ object TokenOccurrenceSource {
 
   def fromPigFile(tokenFile: File, tokenStore: TokenStore, wikipediaToDBpediaClosure: WikipediaToDBpediaClosure, resStore: ResourceStore) = fromPigInputStream(new FileInputStream(tokenFile), tokenStore, wikipediaToDBpediaClosure, resStore)
 
-
+  //Chris: temporarily changed to parse PigStorage output correctly - this is totally hackish at this point
   def plainTokenOccurrenceSource(tokenInputStream: InputStream): Iterator[Triple[String, Array[String], Array[Int]]] = {
-    Source.fromInputStream(tokenInputStream) getLines() filter(!_.equals("")) map {
+    Source.fromInputStream(tokenInputStream) getLines() filter(x => !x.equals("") && !x.contains("{}") && !x.contains("2,3,7,4")) map {
       line: String => {
+        //TEST
+        //System.out.println("line is: " +line)
         val Array(wikiurl, tokens) = line.trim().split('\t')
+        //System.out.println("line is: " + wikiurl)
+        //System.out.println("line is: " + tokens)
+
+        var tokensA = Array[String]()
+        var countsA = Array[Int]()
+
+        //var tempMap = new HashMap[String, Int]
+
+        //parsing for PigStorage output: Example: http://en.wikipedia.org/wiki/Bishti {(kimik,17),(grupi,16),...}
+        val sub = tokens.substring(2, tokens.length()-2)
+        //System.out.println("sub is: " + sub)
+        val tokAndCount: Array[String] = sub.split("\\),\\(");
+
+        tokAndCount.foreach {
+          case (a) => {
+               //System.out.println("a is: " + a)
+
+               //to handle tokens containing commas
+               //val Array(t, c) = a.split(",")
+               val i  = a.lastIndexOf(",")
+               val t = a.substring(0, i)
+               val c =  a.substring(i+1)
+
+               tokensA :+= t
+               //System.out.println("t is: " + t)
+               countsA :+= c.toInt
+               //System.out.println("c is: " + c)
+
+          }
+        }
+
+
+        /*
         var tokensA = Array[String]()
         var countsA = Array[Int]()
 
@@ -62,8 +102,11 @@ object TokenOccurrenceSource {
           }
           print(".")
         }
+        */
         Triple(wikiurl, tokensA, countsA)
       }
+
+
     }
   }
 }

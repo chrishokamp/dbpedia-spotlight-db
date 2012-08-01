@@ -11,6 +11,7 @@ import collection.mutable.HashMap
 import org.apache.commons.logging.LogFactory
 import com.esotericsoftware.kryo.serializers.DefaultSerializers.KryoSerializableSerializer
 import com.esotericsoftware.kryo.Kryo
+import org.dbpedia.spotlight.db.model.DocFrequencyStore
 
 
 /**
@@ -107,6 +108,31 @@ object MemoryStore {
     }
   )
 
+  //TODO: TEST!!
+  kryos.put(classOf[MemoryDocFreqStore].getSimpleName,
+    {
+      val kryo = new Kryo()
+      kryo.setRegistrationRequired(true)
+
+      kryo.register(classOf[Array[Int]], new DefaultArraySerializers.IntArraySerializer())
+      kryo.register(classOf[MemoryDocFreqStore])
+
+      kryo
+    }
+  )
+
+  kryos.put(classOf[MemoryEsaVectorStore].getSimpleName,
+  {
+    val kryo = new Kryo()
+    kryo.setRegistrationRequired(true)
+
+    kryo.register(classOf[MemoryEsaVectorStore], new KryoSerializableSerializer())
+
+    kryo
+  }
+  )
+
+
   def load[T](in: InputStream, simpleName: String): T = {
 
     val kryo: Kryo = kryos.get(simpleName).get
@@ -146,6 +172,19 @@ object MemoryStore {
     s.tokenStore = tokenStore
     s
   }
+
+  //Todo: TEST - this could be wrong because we need an index token-->{resource}
+  def loadEsaVectorStore(in: InputStream, resourceStore: MemoryResourceStore): MemoryEsaVectorStore = {
+    val s = load[MemoryEsaVectorStore](in, classOf[MemoryEsaVectorStore].getSimpleName)
+    s.resourceStore = resourceStore
+    s
+  }
+
+  def loadDocFreqStore(in: InputStream): MemoryDocFreqStore = {
+    load[MemoryDocFreqStore](in, classOf[DocFrequencyStore].getSimpleName)
+  }
+
+  //TODO: END TEST
 
   def dump(store: MemoryStore, out: File) {
     val kryo = kryos.get(store.getClass.getSimpleName).get

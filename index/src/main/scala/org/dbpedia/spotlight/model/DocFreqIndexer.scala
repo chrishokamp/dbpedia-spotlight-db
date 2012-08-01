@@ -6,4 +6,7 @@ package org.dbpedia.spotlight.model
 
 trait DocFreqIndexer {
 
+  def addDocFreqToken (token: Token, df: Int)
+
+  def addDocFreqTokens (tokenCounts: Array[Int])
 }
