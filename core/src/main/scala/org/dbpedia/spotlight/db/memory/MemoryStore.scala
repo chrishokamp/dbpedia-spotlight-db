@@ -5,7 +5,7 @@ import com.esotericsoftware.kryo.io.{Output, Input}
 import org.dbpedia.spotlight.model.{DBpediaType, FreebaseType, SchemaOrgType, OntologyType}
 import java.io._
 import scala.Predef._
-import com.esotericsoftware.kryo.serializers.{DefaultArraySerializers, JavaSerializer}
+import com.esotericsoftware.kryo.serializers.{DefaultSerializers, DefaultArraySerializers, JavaSerializer}
 import java.lang.{System, Short, String}
 import collection.mutable.HashMap
 import org.apache.commons.logging.LogFactory
@@ -120,7 +120,18 @@ object MemoryStore {
       kryo
     }
   )
+  /*
+  //TODO: test for inverted index - Serializing a nested map is tricky!
+  kryos.put(classOf[MemoryInvertedIndexStore].getSimpleName,
+  {
+    val kryo = new Kryo()
+    kryo.setRegistrationRequired(true)
 
+    kryo.register(classOf[Map[Int, Map[Int, Double]]], new DefaultSerializers.CollectionsSingletonMapSerializer())
+    kryo
+  })
+
+  //TODO: test for EsaVectorStore
   kryos.put(classOf[MemoryEsaVectorStore].getSimpleName,
   {
     val kryo = new Kryo()
@@ -131,7 +142,7 @@ object MemoryStore {
     kryo
   }
   )
-
+  */
 
   def load[T](in: InputStream, simpleName: String): T = {
 
