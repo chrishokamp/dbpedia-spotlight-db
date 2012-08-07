@@ -7,15 +7,17 @@ import org.dbpedia.spotlight.db.model.EsaVectorStore
 import org.dbpedia.spotlight.db.memory.{MemoryStore, MemoryDocFreqStore, MemoryEsaVectorStore}
 
 import org.apache.commons.lang.NotImplementedException
+import collection.mutable
 
 /**
  * @author Chris Hokamp
  */
 
-class EsaStoreIndexer (override val baseDir: File)
+
+//TODO: remove abstract
+abstract class EsaStoreIndexer (override val baseDir: File)
   extends MemoryStoreIndexer(baseDir)
-  /*with DocOccurrenceIndexer
-  with DocFreqIndexer*/ {
+  with DocOccurrenceIndexer {
   /*This class adds indexing of tfidf vectors for each doc
   * Building tfidf vectors can only occur AFTER the TokenOccurences have been indexed (in a ContextStore)
   * (1) for a doc, calculate tfidf for each token
@@ -29,15 +31,7 @@ class EsaStoreIndexer (override val baseDir: File)
   * i.e.  val contextStore = MemoryStore.loadContextStore(new FileInputStream("data/context.mem"), tokenStore)
   */
 
-  //TODO: how do we get token-->resource set???
-  // - where is the inverted index??
-  // build it as we iterate over the docs
-  // needs to be persisted!!
-  // Array[Array[Int]] where Ints are resourceIds
-  // return the resource set for a Token by looking at its index
-
-
-  //Doc frequency
+  //Doc frequency - Update: this is implicit in DocOccurrenceIndex
   def addDocFreqToken (token: Token, df: Int) {
     throw new NotImplementedException()
   }
@@ -64,8 +58,12 @@ class EsaStoreIndexer (override val baseDir: File)
 
 
   //TODO: remove abstract before uncommenting
-  //lazy val vectorStore = new MemoryEsaVectorStore()
+  lazy val vectorStore = new MemoryEsaVectorStore()
 
+  def addDocOccurrence (resource: DBpediaResource, resourceWeights: mutable.HashMap[Int, Double]) {
+    val id = resource.id
+    vectorStore.resources.put(id, resourceWeights)
+  }
 
   def createEsaVectorStore (n: Int) {
     throw new NotImplementedException()

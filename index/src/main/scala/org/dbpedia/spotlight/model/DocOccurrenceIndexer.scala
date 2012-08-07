@@ -3,15 +3,16 @@ package org.dbpedia.spotlight.model
 /**
  * @author Chris Hokamp
  *         - indexes a token using its tfidf values from the docs in which it occurs (uses TokenOccurenceIndexer as model)
+ *         - note that this is implicitly an inverted index of the corpus as well
  */
 
 trait DocOccurrenceIndexer {
 
-  def addDocOccurrence(token: Token, resource: DBpediaResource, weight: Double)
+  def addDocOccurrence(resource: DBpediaResource, token: Token, weight: Double)
 
-  def addDocOccurrence(token: Token, resourceWeights: Map[Int, Double])
+  def addDocOccurrence(resource: DBpediaResource, resourceWeights: Map[Int, Double])
 
-  def addDocOccurrences(occs: Map[Token, Map[Int, Double]])
+  //def addDocOccurrences(occs: Map[Token, Map[Int, Double]])
 
 
   def writeDocOccurences()

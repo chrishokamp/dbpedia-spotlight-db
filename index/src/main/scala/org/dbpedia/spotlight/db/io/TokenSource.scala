@@ -22,9 +22,24 @@ import scala.Array
 object TokenSource {
 
   private val LOG = LogFactory.getLog(this.getClass)
+  /*
+  def fromJsonFile (tokenFile: File) = fromJsonInputStream(new FileInputStream(tokenFile))
+
+  def fromJsonInputStream (jsonInputStream: FileInputStream) {
+    val tokenMap = HashMap[String, Int]()
+
+    var i = 0
+
+    TokenOccurrenceSource.jsonTokenOccurenceSource(jsonInputStream) foreach {
+
+    }
+
+  }
+  */
+
 
   def fromOccurrenceSource(os: OccurrenceSource, tokenizer: Tokenizer): java.util.Map[Token, Int] = {
-    val tokenMap = HashMap[String, Int]()
+    val tokenMap = new HashMap[String, Int]()
 
     os.foreach {
       occ: DBpediaResourceOccurrence => {
@@ -45,7 +60,6 @@ object TokenSource {
 
   def fromPigFile(tokenFile: File) = fromPigInputStream(new FileInputStream(tokenFile))
   def fromPigInputStream(tokenFile: InputStream) = {
-
     val tokenMap = HashMap[String, Int]()
 
     var i = 0
@@ -115,7 +129,7 @@ object TokenSource {
     docFreq.map{
       case(token, count) => {
         id += 1
-        (new Token(id, token, count), count.toInt)
+        (new Token(id, token, count), count)
       }
     }.toMap.asJava
 

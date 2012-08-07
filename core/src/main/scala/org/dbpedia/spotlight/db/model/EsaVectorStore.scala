@@ -12,6 +12,6 @@ import org.dbpedia.spotlight.model.{DBpediaResource, Token}
  */
 
 trait EsaVectorStore {
-  def getResourceVector(token: Token): Map[DBpediaResource, Double]
+  //def getDocVector(resource: DBpediaResource): Map[Int, Double]
 
 }
