@@ -24,7 +24,7 @@ class MemoryEsaVectorStore
   //var weights: Array[Array[Double]]
   //TODO: change to Map[Int, Map[Int, Double]]
   //    - Map[resId, Map[tokenId, Sum(Double)]
-  var resources = new  HashMap[Int, mutable.HashMap[Int, Double]]
+  var resources = new  mutable.HashMap[Int, mutable.Map[Int, Double]]
 
   def size = resources.size
 
@@ -36,7 +36,7 @@ class MemoryEsaVectorStore
   def getDocVector(resource: DBpediaResource): mutable.HashMap[Int, Double] = {
     val id  = resource.id
 
-    val resourceWeights = resources.getOrElseUpdate(id, Map.empty())
+    val resourceWeights = resources.getOrElseUpdate(id, mutable.Map.empty())
     resourceWeights
   }
 

@@ -1,5 +1,7 @@
 package org.dbpedia.spotlight.model
 
+import collection.mutable
+
 /**
  * @author Chris Hokamp
  *         - indexes a token using its tfidf values from the docs in which it occurs (uses TokenOccurenceIndexer as model)
@@ -10,7 +12,7 @@ trait DocOccurrenceIndexer {
 
   def addDocOccurrence(resource: DBpediaResource, token: Token, weight: Double)
 
-  def addDocOccurrence(resource: DBpediaResource, resourceWeights: Map[Int, Double])
+  def addDocOccurrence(resource: DBpediaResource, resourceWeights: mutable.Map[Int, Double])
 
   //def addDocOccurrences(occs: Map[Token, Map[Int, Double]])
 
