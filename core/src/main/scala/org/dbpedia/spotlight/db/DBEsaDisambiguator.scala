@@ -1,52 +1,65 @@
 package org.dbpedia.spotlight.db
 
 import model._
-import org.dbpedia.spotlight.model._
 import org.dbpedia.spotlight.disambiguate.mixtures.Mixture
+import org.dbpedia.spotlight.disambiguate.ParagraphDisambiguator
 import org.apache.commons.logging.LogFactory
-import scala.collection.JavaConverters._
-import similarity.TFICFSimilarity
-import org.dbpedia.spotlight.disambiguate.{ParagraphDisambiguator, Disambiguator}
-import scala.Predef._
-import org.dbpedia.spotlight.exceptions.{SurfaceFormNotFoundException, InputException}
+import similarity.{TfidfSimilarity, TFICFSimilarity}
+import org.dbpedia.spotlight.model._
 import collection.mutable
-
+import scala.math
+import org.dbpedia.spotlight.exceptions.{InputException, SurfaceFormNotFoundException}
 
 /**
- * @author Joachim Daiber
+ * @author Chris Hokamp
  */
 
-class DBTwoStepDisambiguator(
+class DBEsaDisambiguator (
   tokenStore: TokenStore,
   surfaceFormStore: SurfaceFormStore,
   resourceStore: ResourceStore,
   candidateMap: CandidateMapStore,
   //Chris: testing...
-  //invertedIndex: InvertedIndexStore,
-  //esaVectorStore: EsaVectorStore,
-  contextStore: ContextStore,
+  invertedIndex: InvertedIndexStore,
+  esaVectorStore: EsaVectorStore,
+  //contextStore: ContextStore,
   //Chris: END TESTING
   tokenizer: Tokenizer,
   mixture: Mixture
-) extends ParagraphDisambiguator {
+  ) extends ParagraphDisambiguator {
 
   private val LOG = LogFactory.getLog(this.getClass)
 
-  val similarity = new TFICFSimilarity()
-
-
+  val similarity = new TfidfSimilarity()
   def getScores(text: Text, candidates: Set[DBpediaResource]): mutable.Map[DBpediaResource, Double] = {
 
     val tokens = tokenizer.tokenize(text).map{ ts: String => tokenStore.getToken(ts) }
-    val query = tokens.groupBy(identity).mapValues(_.size).asJava
+    val query = tokens.groupBy(identity).mapValues(_.size)
+    val queryEsaVector = new mutable.HashMap[Int, Double]()
+    query.foreach {
+      case (token: Token, count: Int) => {
+        //TODO: fix hard-coding of doc-count
+        val idf = math.log(3000000/invertedIndex.getDocFreq(token))
+        val tfidf: Double = count*idf
+        val tokenDocVect = invertedIndex.getResources(token)
+        tokenDocVect.foreach {
+          case (i: Int, weight: Double) => {
+            queryEsaVector.put(i, (queryEsaVector.getOrElse(i, 0.0)) + (weight*tfidf))
+          }
+        }
+      }
+    }
 
-    val contextCounts = candidates.map{ candRes: DBpediaResource =>
-      (candRes -> contextStore.getContextCounts(candRes))
+    val contextVectors = candidates.map{ candRes: DBpediaResource =>
+      (candRes -> esaVectorStore.getDocVector(candRes))
     }.toMap
+    //TODO: understand why this is necessary
+    val mutableVecs = collection.mutable.Map(contextVectors.toSeq: _*)
 
-    similarity.score(query, contextCounts)
+    similarity.score(queryEsaVector, mutableVecs)
   }
 
+  //Copied from DBTwoStepDisambiguator
   val MAX_CANDIDATES = 500
   def bestK(paragraph: Paragraph, k: Int): Map[SurfaceFormOccurrence, List[DBpediaResourceOccurrence]] = {
 
@@ -91,29 +104,29 @@ class DBTwoStepDisambiguator(
     occs.keys.foldLeft(Map[SurfaceFormOccurrence, List[DBpediaResourceOccurrence]]())( (acc, aSfOcc) => {
       val candOccs = occs.getOrElse(aSfOcc, List[Candidate]())
         .map{ cand: Candidate => {
-          val resOcc = new DBpediaResourceOccurrence(
-            "",
-            cand.resource,
-            cand.surfaceForm,
-            aSfOcc.context,
-            aSfOcc.textOffset,
-            Provenance.Undefined,
-            0.0,
-            0.0,
-            contextScores.getOrElse(cand.resource, 0.0)
-          )
-          resOcc.setSimilarityScore(
-            (1234.3989 * cand.prior) +
-               0.9968 * resOcc.contextualScore +
-                 -0.0275
-          )
-          resOcc
-        }
+        val resOcc = new DBpediaResourceOccurrence(
+          "",
+          cand.resource,
+          cand.surfaceForm,
+          aSfOcc.context,
+          aSfOcc.textOffset,
+          Provenance.Undefined,
+          0.0,
+          0.0,
+          contextScores.getOrElse(cand.resource, 0.0)
+        )
+        resOcc.setSimilarityScore(
+          (1234.3989 * cand.prior) +
+            0.9968 * resOcc.contextualScore +
+            -0.0275
+        )
+        resOcc
       }
-      .filter{ o => !java.lang.Double.isNaN(o.similarityScore) }
-      .sortBy( o => o.similarityScore )
-      .reverse
-      .take(k)
+      }
+        .filter{ o => !java.lang.Double.isNaN(o.similarityScore) }
+        .sortBy( o => o.similarityScore )
+        .reverse
+        .take(k)
 
       acc + (aSfOcc -> candOccs)
     })
@@ -122,13 +135,13 @@ class DBTwoStepDisambiguator(
 
   @throws(classOf[InputException])
   def disambiguate(paragraph: Paragraph): List[DBpediaResourceOccurrence] = {
-      // return first from each candidate set
-      bestK(paragraph, 5)
-          .filter(kv =>
-              kv._2.nonEmpty)
-          .map( kv =>
-              kv._2.head)
-          .toList
+    // return first from each candidate set
+    bestK(paragraph, 5)
+      .filter(kv =>
+      kv._2.nonEmpty)
+      .map( kv =>
+      kv._2.head)
+      .toList
   }
 
   def name = "Database-backed 2 Step TF*ICF disambiguator"

@@ -4,7 +4,7 @@ import org.dbpedia.spotlight.db.MemoryStoreIndexer
 import java.io.File
 import org.dbpedia.spotlight.model._
 import org.dbpedia.spotlight.db.model.EsaVectorStore
-import org.dbpedia.spotlight.db.memory.{MemoryStore, MemoryDocFreqStore, MemoryEsaVectorStore}
+import memory.{MemoryInvertedIndexStore, MemoryStore, MemoryDocFreqStore, MemoryEsaVectorStore}
 
 import org.apache.commons.lang.NotImplementedException
 import collection.mutable
@@ -32,13 +32,26 @@ class EsaStoreIndexer(override val baseDir: File)
   * i.e.  val contextStore = MemoryStore.loadContextStore(new FileInputStream("data/context.mem"), tokenStore)
   */
 
+  //TODO: remove abstract before uncommenting
+
+  lazy val invertedIndex = new MemoryInvertedIndexStore()
+  lazy val vectorStore = new MemoryEsaVectorStore()
+
+
+  def addDocFreq (token: Token, count: Int) {
+  //  val id: Int = token.id
+  //  invertedIndex.docFreq.put(id, count)
+    throw new NotImplementedException();
+  }
+
   //doc (resource) occurrences
   def addDocOccurrence(resource: DBpediaResource, token: Token, weight: Double) {
     throw new NotImplementedException()
   }
-
-  //TODO: remove abstract before uncommenting
-  lazy val vectorStore = new MemoryEsaVectorStore()
+  //Note: this is currently implemented as part of addResourceSet
+  def setDocFrequency (tokenId: Int, docFrequency: Int) {
+    throw new NotImplementedException()
+  }
 
   def addDocOccurrence(resource: DBpediaResource, resourceWeights: mutable.Map[Int, Double]) {
     val id = resource.id
@@ -53,6 +66,7 @@ class EsaStoreIndexer(override val baseDir: File)
 
   def addDocOccurrences(occs: Map[Token, Map[Int, Double]]) {
     throw new NotImplementedException()
+  }
     /*occs.foreach {case (tok, docWeights) => {
       val (j, w) = docWeights.unzip
       vectorStore.resources(tok.id) = j.toArray
@@ -60,11 +74,18 @@ class EsaStoreIndexer(override val baseDir: File)
     }
     } */
 
-    def writeDocOccurrences() {
-      throw new NotImplementedException()
-    }
-
+  def writeDocOccurrences() {
+    throw new NotImplementedException()
   }
+
+  //adds the resource set and the doc frequency
+  def addResourceSet (tokenId: Int, docs: mutable.HashMap[Int, Double]) {
+    val docFreq = docs.size
+    invertedIndex.index.put(tokenId, docs)
+    invertedIndex.docFreq.put(tokenId, docFreq)
+  }
+
+  //def getResources
 
 
 }

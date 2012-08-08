@@ -8,7 +8,7 @@ import collection.mutable
 
 trait InvertedIndexIndexer {
 
-  def addResourceSet (tokenId: Int, docSet: mutable.Map[Int, Double])
-
+  def addResourceSet (tokenId: Int, docSet: mutable.HashMap[Int, Double])
+  def setDocFrequency (tokenId: Int, docFreq: Int)
 
 }

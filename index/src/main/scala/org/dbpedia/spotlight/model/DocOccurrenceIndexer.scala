@@ -17,7 +17,7 @@ trait DocOccurrenceIndexer {
   //def addDocOccurrences(occs: Map[Token, Map[Int, Double]])
 
 
-  def writeDocOccurences()
+  //def writeDocOccurrences()
 
   def createEsaVectorStore(n: Int)
 

@@ -13,14 +13,14 @@ class MemoryInvertedIndexStore
   with InvertedIndexStore
   with DocFrequencyStore {
 
-  val docFreq = Array[Int]()
-  val index = new mutable.HashMap[Int, mutable.Map[Int, Double]]
+  val docFreq = new mutable.HashMap[Int, Int]
+  val index = new mutable.HashMap[Int, mutable.HashMap[Int, Double]]
 
   def size =  docFreq.size
 
   def getDocFreq (token: Token):  Int = {
     val i = token.id
-    docFreq(i)
+    docFreq.getOrElse(i, 1) //one to avoid div by zero
   }
 
   def getResources (token: Token): mutable.Map[Int, Double] = {

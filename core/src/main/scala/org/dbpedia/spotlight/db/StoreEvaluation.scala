@@ -60,9 +60,20 @@ object StoreEvaluation {
       new LuceneTokenizer(new SnowballAnalyzer(Version.LUCENE_36, "English")),
       new LinearRegressionMixture()
     )
-
+    /*
+    val disambiguator = new DBEsaDisambiguator(
+      tokenStore,
+      sfStore,
+      resStore,
+      cm,
+      contextStore,
+      new LuceneTokenizer(new EnglishAnalyzer(Version.LUCENE_36),
+      new LinearRegressionMixture()
+    )
+    */
     val spotter = new WikiMarkupSpotter()
-    val t = new Text("[[Berlin]] is the capital of [[Germany]].")
+    //val t = new Text("[[Berlin]] is the capital of [[Germany]].")
+    val t = new Text("[[Fish]] can be found near coral reefs in the [[ocean]].")
     val spots = spotter.extract(t)
     val p = new Paragraph(t, spots.asScala.toList)
 

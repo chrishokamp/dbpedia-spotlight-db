@@ -1,6 +1,7 @@
 package org.dbpedia.spotlight.db.model
 
 import org.dbpedia.spotlight.model.{DBpediaResource, Token}
+import collection.mutable
 
 /**
  * @author Chris Hokamp
@@ -12,6 +13,6 @@ import org.dbpedia.spotlight.model.{DBpediaResource, Token}
  */
 
 trait EsaVectorStore {
-  //def getDocVector(resource: DBpediaResource): Map[Int, Double]
+  def getDocVector(resource: DBpediaResource): mutable.Map[Int, Double]
 
 }

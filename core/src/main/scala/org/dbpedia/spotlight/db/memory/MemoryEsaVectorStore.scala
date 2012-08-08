@@ -33,19 +33,19 @@ class MemoryEsaVectorStore
   @transient
   var resourceStore: ResourceStore = null
 
-  def getDocVector(resource: DBpediaResource): mutable.HashMap[Int, Double] = {
+  def getDocVector(resource: DBpediaResource): mutable.Map[Int, Double] = {
     val id  = resource.id
 
-    val resourceWeights = resources.getOrElseUpdate(id, mutable.Map.empty())
+    val resourceWeights = resources.getOrElse(id, new mutable.HashMap[Int, Double]())
     resourceWeights
   }
 
-  def getDocVector(i: Int): mutable.HashMap[Int, Double] = {
-    val resourceWeights = resources.getOrElseUpdate(i, Map.empty())
+  def getDocVector(i: Int): mutable.Map[Int, Double] = {
+    val resourceWeights = resources.getOrElse(i, mutable.HashMap[Int, Double]())
     resourceWeights
   }
 
-  def addVector (resource: DBpediaResource, resourceWeights: HashMap[Int, Double]) {
+  def addVector (resource: DBpediaResource, resourceWeights: mutable.Map[Int, Double]) {
     val id = resource.id
     resources.put(id, resourceWeights)
   }
