@@ -22,14 +22,19 @@ class TfidfSimilarity {
       case (resource, weight) => {
         candidateVectors.keys foreach {cand: DBpediaResource => {
           val docVect = candidateVectors.getOrElse(cand, null)
-          scores(cand) = scores.getOrElse(cand, 0.0) + (weight*docVect.getOrElse(resource, 0.0))}
+          if (docVect != null) {
+            scores(cand) = scores.getOrElse(cand, 0.0) + (weight*docVect.getOrElse(resource, 0.0))
+          }
         }
       }
+    }
     }
     val queryLen = eucLen(query)
     candidateVectors.keys foreach {cand: DBpediaResource =>
        val docLen = eucLen(candidateVectors(cand))
        scores(cand) = scores(cand) / (queryLen * docLen)
+      //TEST
+      println("For dbpedia resource: " + cand.toString + " SIMILARITY with query: " + scores(cand))
     }
     scores
   }

@@ -20,7 +20,7 @@ class MemoryInvertedIndexStore
 
   def getDocFreq (token: Token):  Int = {
     val i = token.id
-    docFreq.getOrElse(i, 1) //one to avoid div by zero
+    docFreq.getOrElse(i, 100000) //to avoid div by zero
   }
 
   def getResources (token: Token): mutable.Map[Int, Double] = {
