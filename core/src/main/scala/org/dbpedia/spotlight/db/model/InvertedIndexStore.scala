@@ -9,7 +9,7 @@ import collection.mutable
 
 trait InvertedIndexStore {
   //TODO: confirm logic behind making this mutable
-  def getResources (token: Token): mutable.Map[Int, Double]
+  def getResources (token: Token): mutable.HashMap[Int, Double]
   def getDocFreq (token: Token): Int
 
 

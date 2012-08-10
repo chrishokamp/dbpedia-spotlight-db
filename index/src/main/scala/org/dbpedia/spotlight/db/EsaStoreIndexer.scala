@@ -13,8 +13,6 @@ import collection.mutable
  * @author Chris Hokamp
  */
 
-
-//TODO: remove abstract
 class EsaStoreIndexer(override val baseDir: File)
   extends MemoryStoreIndexer(baseDir)
   with InvertedIndexIndexer
@@ -36,6 +34,17 @@ class EsaStoreIndexer(override val baseDir: File)
 
   lazy val invertedIndex = new MemoryInvertedIndexStore()
   lazy val vectorStore = new MemoryEsaVectorStore()
+
+  //adds the resource set and the doc frequency
+  def addResourceSet (tokenId: Int, docs: mutable.HashMap[Int, Double]) {
+    val docFreq = docs.size
+    invertedIndex.index.put(tokenId, docs)
+    invertedIndex.docFreq.put(tokenId, docFreq)
+  }
+
+  def writeInvertedIndex () {
+    MemoryStore.dump(invertedIndex, new File(baseDir, "invertedIndex.mem"))
+  }
 
 
   def addDocFreq (token: Token, count: Int) {
@@ -78,14 +87,7 @@ class EsaStoreIndexer(override val baseDir: File)
     throw new NotImplementedException()
   }
 
-  //adds the resource set and the doc frequency
-  def addResourceSet (tokenId: Int, docs: mutable.HashMap[Int, Double]) {
-    val docFreq = docs.size
-    invertedIndex.index.put(tokenId, docs)
-    invertedIndex.docFreq.put(tokenId, docFreq)
-  }
 
-  //def getResources
 
 
 }

@@ -120,23 +120,23 @@ object MemoryStore {
       kryo
     }
   )
-  /*
+
   //TODO: test for inverted index - Serializing a nested map is tricky!
   kryos.put(classOf[MemoryInvertedIndexStore].getSimpleName,
   {
     val kryo = new Kryo()
-    kryo.setRegistrationRequired(true)
+    //kryo.setRegistrationRequired(true)
 
-    kryo.register(classOf[Map[Int, Map[Int, Double]]], new DefaultSerializers.CollectionsSingletonMapSerializer())
+    //kryo.register(classOf[HashMap[Int, HashMap[Int, Double]]], new DefaultSerializers.CollectionsSingletonMapSerializer())
     kryo
   })
-
+   /*
   //TODO: test for EsaVectorStore
   kryos.put(classOf[MemoryEsaVectorStore].getSimpleName,
   {
     val kryo = new Kryo()
     kryo.setRegistrationRequired(true)
-
+    //WRONG
     kryo.register(classOf[MemoryEsaVectorStore], new KryoSerializableSerializer())
 
     kryo
@@ -184,16 +184,20 @@ object MemoryStore {
     s
   }
 
-  //Todo: TEST - this could be wrong because we need an index token-->{resource}
+  //Todo: TEST
+  def loadInvertedIndexStore (in: InputStream): MemoryInvertedIndexStore = {
+    load[MemoryInvertedIndexStore](in, classOf[MemoryInvertedIndexStore].getSimpleName())
+  }
+
+
+
+
   def loadEsaVectorStore(in: InputStream, resourceStore: MemoryResourceStore): MemoryEsaVectorStore = {
     val s = load[MemoryEsaVectorStore](in, classOf[MemoryEsaVectorStore].getSimpleName)
     s.resourceStore = resourceStore
     s
   }
 
-  def loadDocFreqStore(in: InputStream): MemoryDocFreqStore = {
-    load[MemoryDocFreqStore](in, classOf[DocFrequencyStore].getSimpleName)
-  }
 
   //TODO: END TEST
 

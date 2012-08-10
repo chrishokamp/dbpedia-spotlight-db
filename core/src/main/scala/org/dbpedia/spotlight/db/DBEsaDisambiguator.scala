@@ -42,9 +42,11 @@ class DBEsaDisambiguator (
         val idf = math.log(3000000/invertedIndex.getDocFreq(token))
         val tfidf: Double = count*idf
         val tokenDocVect = invertedIndex.getResources(token)
-        tokenDocVect.foreach {
-          case (i: Int, weight: Double) => {
-            queryEsaVector.put(i, (queryEsaVector.getOrElse(i, 0.0)) + (weight*tfidf))
+        if (tokenDocVect != null) {
+          tokenDocVect.foreach {
+            case (i: Int, weight: Double) => {
+             queryEsaVector.put(i, (queryEsaVector.getOrElse(i, 0.0)) + (weight*tfidf))
+           }
           }
         }
       }
@@ -144,7 +146,7 @@ class DBEsaDisambiguator (
       .toList
   }
 
-  def name = "Database-backed 2 Step TF*ICF disambiguator"
+  def name = "Database-backed 2 Step ESA Disambiguator"
 
 
 }

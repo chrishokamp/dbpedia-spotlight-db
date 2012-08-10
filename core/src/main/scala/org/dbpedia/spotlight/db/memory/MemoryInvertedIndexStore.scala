@@ -3,6 +3,8 @@ package org.dbpedia.spotlight.db.memory
 import org.dbpedia.spotlight.db.model.{DocFrequencyStore, InvertedIndexStore}
 import org.dbpedia.spotlight.model.Token
 import collection.mutable
+import com.esotericsoftware.kryo.Kryo
+import com.esotericsoftware.kryo.io.Output
 
 /**
  * @author Chris Hokamp
@@ -13,8 +15,10 @@ class MemoryInvertedIndexStore
   with InvertedIndexStore
   with DocFrequencyStore {
 
-  val docFreq = new mutable.HashMap[Int, Int]
-  val index = new mutable.HashMap[Int, mutable.HashMap[Int, Double]]
+  //creating new instances could be problematic with serialization
+  var docFreq = new mutable.HashMap[Int, Int]
+  var index = new mutable.HashMap[Int, mutable.HashMap[Int, Double]]
+
 
   def size =  docFreq.size
 
@@ -23,7 +27,7 @@ class MemoryInvertedIndexStore
     docFreq.getOrElse(i, 100000) //to avoid div by zero
   }
 
-  def getResources (token: Token): mutable.Map[Int, Double] = {
+  def getResources (token: Token): mutable.HashMap[Int, Double] = {
 
      val id = token.id
      val resSet= index.get(id)
@@ -33,5 +37,11 @@ class MemoryInvertedIndexStore
        vect
      }
   }
+
+  def add (tokenId: Int, docs: mutable.HashMap[Int, Double]) {
+    index.put(tokenId, docs)
+  }
+
+
 
 }
