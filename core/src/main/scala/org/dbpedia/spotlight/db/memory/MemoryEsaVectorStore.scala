@@ -13,8 +13,6 @@ import collection.mutable
  * @author Chris Hokamp
  */
 
-@SerialVersionUID(1008001)
-//TODO: remove abstract
 class MemoryEsaVectorStore
   extends MemoryStore
   with EsaVectorStore
@@ -27,11 +25,6 @@ class MemoryEsaVectorStore
   var resources = new  mutable.HashMap[Int, mutable.Map[Int, Double]]
 
   def size = resources.size
-
-  //used to go from id to resource name
-  //may not be necessary
-  @transient
-  var resourceStore: ResourceStore = null
 
   def getDocVector(resource: DBpediaResource): mutable.Map[Int, Double] = {
     val id  = resource.id

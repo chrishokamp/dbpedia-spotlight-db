@@ -12,7 +12,10 @@ import org.dbpedia.spotlight.exceptions.{DBpediaResourceNotFoundException, NotAD
 
 import net.liftweb.json._
 
+
+
 import java.lang.System
+import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream
 
 //import collection.immutable.HashMap
 
@@ -38,8 +41,19 @@ object TokenOccurrenceSource {
     }
   */
 
-  def fromJsonFile(tokenFile: File, tokenStore: TokenStore, wikipediaToDBpediaClosure: WikipediaToDBpediaClosure, resStore: ResourceStore) = fromJsonInputStream(new FileInputStream(tokenFile), tokenStore, wikipediaToDBpediaClosure, resStore)
+  def fromJsonFile(tokenFile: File, tokenStore: TokenStore, wikipediaToDBpediaClosure: WikipediaToDBpediaClosure, resStore: ResourceStore) = {
+    var input: InputStream = new FileInputStream(tokenFile)
+    if (tokenFile.getName.endsWith(".bz2")) {
+        input = new BZip2CompressorInputStream(input)
+    }
+    fromJsonInputStream(input, tokenStore, wikipediaToDBpediaClosure, resStore)
+  }
+
+
+
+
   def jsonTokenOccurenceSource (jsonInputStream: InputStream): Iterator[Triple[String, Array[String], Array[Double]]] = {
+
     Source.fromInputStream(jsonInputStream) getLines() filter(!_.equals("")) map {
         line: String => {
           val json = parse(line)

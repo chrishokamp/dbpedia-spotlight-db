@@ -123,7 +123,7 @@ object BuildIndexTest {
 
 
     //TESTING disk-backed inverted index
-    val baseDir = new File("/home/chris/data/indexes")
+    //val baseDir = new File("/home/chris/data/indexes")
     //val persistedInvertedIndex = new JDBMStore[Int, mutable.HashMap[Int, Double]](new File(baseDir, "ii.disk").getAbsolutePath)
 
     //Create wikipedia to DBpedia closure
@@ -142,7 +142,7 @@ object BuildIndexTest {
 
     val resourceMap: Iterator[(DBpediaResource, Array[Token], Array[Double])] =
       //TokenOccurrenceSource.fromJsonFile(new File("raw_data/json/tfidf-sample.json"),
-      TokenOccurrenceSource.fromJsonFile(new File("raw_data/json/min5-50000-docs.json"),
+      TokenOccurrenceSource.fromJsonFile(new File("raw_data/json/token_counts-top100.json"),
       tokenStore,
       wikipediaToDBpediaClosure,
       resStore
@@ -177,7 +177,7 @@ object BuildIndexTest {
              //val index = new HashMap[Int, Double]
 
              //TODO: fix hard-coded tf-idf threshold below (changed to test indexing efficiency)
-             if (weights(i) > 50){
+             //if (weights(i) > 1){
 
                 val index = esaMemoryIndexer.invertedIndex.index.getOrElse(tokenId, new HashMap[Int,Double]())
                 index.put(resId, weights(i))
@@ -192,7 +192,7 @@ object BuildIndexTest {
                index.put(resId, weights(i))
                invertedIndex.add(tokenId, index)
              */
-             }
+             //}
 
              i += 1
           }
@@ -209,7 +209,7 @@ object BuildIndexTest {
 
     //TODO: create a more efficient method - this repeats loading tokens
     val docs: Iterator[(DBpediaResource, Array[Token], Array[Double])] =
-      TokenOccurrenceSource.fromJsonFile(new File("raw_data/json/min5-50000-docs.json"),
+      TokenOccurrenceSource.fromJsonFile(new File("raw_data/json/token_counts-top100.json"),
         tokenStore,
         wikipediaToDBpediaClosure,
         resStore
@@ -233,8 +233,6 @@ object BuildIndexTest {
         //get the vector from Map structure
 
         tokens.foreach {
-
-              //TODO: this was throwing null-pointer - find problem and fix
           (tok: Token) => {
             //query the inverted index and sum the scores for each doc
             val tokId = tok.id

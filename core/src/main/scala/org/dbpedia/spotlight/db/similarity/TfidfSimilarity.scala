@@ -34,7 +34,7 @@ class TfidfSimilarity {
        val docLen = eucLen(candidateVectors(cand))
        scores(cand) = scores(cand) / (queryLen * docLen)
       //TEST
-      println("For dbpedia resource: " + cand.toString + " SIMILARITY with query: " + scores(cand))
+      //println("For dbpedia resource: " + cand.toString + " SIMILARITY with query: " + scores(cand))
     }
     scores
   }

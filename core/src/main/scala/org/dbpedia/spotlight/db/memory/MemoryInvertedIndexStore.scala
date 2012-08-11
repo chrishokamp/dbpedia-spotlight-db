@@ -9,7 +9,7 @@ import com.esotericsoftware.kryo.io.Output
 /**
  * @author Chris Hokamp
  */
-//TODO: remove abstract
+
 class MemoryInvertedIndexStore
   extends MemoryStore
   with InvertedIndexStore
