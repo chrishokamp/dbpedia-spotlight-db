@@ -8,6 +8,7 @@ import memory.{MemoryInvertedIndexStore, MemoryStore, MemoryDocFreqStore, Memory
 
 import org.apache.commons.lang.NotImplementedException
 import collection.mutable
+import collection.mutable.{ListBuffer, ArrayBuffer}
 
 /**
  * @author Chris Hokamp
@@ -30,22 +31,48 @@ class EsaStoreIndexer(override val baseDir: File)
   * i.e.  val contextStore = MemoryStore.loadContextStore(new FileInputStream("data/context.mem"), tokenStore)
   */
 
-  //TODO: remove abstract before uncommenting
-
   lazy val invertedIndex = new MemoryInvertedIndexStore()
   lazy val vectorStore = new MemoryEsaVectorStore()
 
+  def createInvertedIndexStore (n: Int) {
+    invertedIndex.docs = new Array[ListBuffer[(Int,Double)]](n)
+
+  }
+
+  //TODO: this is very inefficient
+  def addResource (tokenId: Int, doc: (Int, Double)) {
+
+    //TESTING
+    var b = invertedIndex.docs(tokenId)
+    if (b == null) {
+      b = new ListBuffer[(Int, Double)]()
+      b.append(doc)
+      invertedIndex.docs(tokenId) = b
+    } else {
+      b.append(doc)
+      invertedIndex.docs(tokenId) = b
+    }
+  }
+
+
+  //TODO: working to convert the index to Array representation of the Map
   //adds the resource set and the doc frequency
   def addResourceSet (tokenId: Int, docs: mutable.HashMap[Int, Double]) {
+    //TODO: index doc freq using an array
     val docFreq = docs.size
-    invertedIndex.index.put(tokenId, docs)
+    //invertedIndex.index.put(tokenId, docs)
+    //TODO: these methods are currently in the wrong place
+    invertedIndex.addAll(tokenId, docs)
     invertedIndex.docFreq.put(tokenId, docFreq)
   }
 
+
+  //TODO: this doesn't work right now
+  /*
   def writeInvertedIndex () {
     MemoryStore.dump(invertedIndex, new File(baseDir, "invertedIndex.mem"))
   }
-
+  */
 
   def addDocFreq (token: Token, count: Int) {
   //  val id: Int = token.id

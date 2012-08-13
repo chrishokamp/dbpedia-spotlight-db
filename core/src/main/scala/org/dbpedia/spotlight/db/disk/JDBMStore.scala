@@ -24,6 +24,8 @@ class JDBMStore[A, B](databaseFile: String) {
 
   def get(key: A): B = data.get(key)
 
+
+  //Written for testing only - currently returns incorrect booleans (always true)
   def contains(key: A): Boolean = {
     val B = data.get(key)
     if (B == null) {

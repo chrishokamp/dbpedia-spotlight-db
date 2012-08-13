@@ -5,7 +5,7 @@ import java.io.{PrintWriter, FileInputStream, File}
 import org.dbpedia.spotlight.model.Token
 
 import org.dbpedia.spotlight.db._
-import disk.JDBMStore
+import disk.{DiskInvertedIndexStore, JDBMStore}
 import org.dbpedia.spotlight.db.memory.{MemoryInvertedIndexStore, MemoryEsaVectorStore, MemoryStore}
 
 import java.lang.{Short, String}
@@ -20,7 +20,7 @@ import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
 
 import collection.mutable.ListBuffer
-import java.util.{Map, Set}
+//import java.util.{Map, Set}
 import org.dbpedia.spotlight.model._
 import scala.{Array, Int}
 import collection.mutable.HashMap
@@ -113,7 +113,7 @@ object BuildIndexTest {
     //ImportPig uses MemoryStoreIndexer, which EsaStoreIndexer extends
     //val memoryIndexer = new MemoryStoreIndexer(new File("data/"))
 
-    val esaMemoryIndexer = new EsaStoreIndexer(new File("data/"))
+
 
     val resStore = MemoryStore.loadResourceStore(new FileInputStream("data/res.mem"))
     val tokenStore = MemoryStore.loadTokenStore(new FileInputStream("data/tokens.mem"))
@@ -121,10 +121,9 @@ object BuildIndexTest {
     val cm = MemoryStore.loadCandidateMapStore(new FileInputStream("data/candmap.mem"), resStore)
     //val invertedIndex: MemoryInvertedIndexStore = MemoryStore.loadInvertedIndexStore(new FileInputStream("data/invertedIndex.mem"))
 
-
-    //TESTING disk-backed inverted index
-    //val baseDir = new File("/home/chris/data/indexes")
-    //val persistedInvertedIndex = new JDBMStore[Int, mutable.HashMap[Int, Double]](new File(baseDir, "ii.disk").getAbsolutePath)
+    val esaMemoryIndexer = new EsaStoreIndexer(new File("data/"))
+    esaMemoryIndexer.createInvertedIndexStore(tokenStore.size)
+    println ("the size of token store is: " + tokenStore.size)
 
     //Create wikipedia to DBpedia closure
     val wikipediaToDBpediaClosure = new WikipediaToDBpediaClosure(
@@ -132,21 +131,14 @@ object BuildIndexTest {
       new FileInputStream(new File("raw_data/pig/disambiguations_en.nt"))
     )
 
-
-    //Create the InvertedIndex and the EsaVectorStore Simultaeneously
-    // (1) Load the tfidf index via ImportJSON
-    // (2) For each doc, iterate over its tokens
-    // (3) For each token, check if its vector exists
-    //          - vectors are stored in MemoryEsaVectorStore, tokensIDs are
-
-
-    val resourceMap: Iterator[(DBpediaResource, Array[Token], Array[Double])] =
-      //TokenOccurrenceSource.fromJsonFile(new File("raw_data/json/tfidf-sample.json"),
-      TokenOccurrenceSource.fromJsonFile(new File("raw_data/json/token_counts-top100.json"),
+    //TODO: TESTING with TOLIST - check this!!
+    val resourceMap: List[(DBpediaResource, Array[Token], Array[Double])] =
+      TokenOccurrenceSource.fromJsonFile(new File("raw_data/json/tfidf-sample.json"),
+      //TokenOccurrenceSource.fromJsonFile(new File("raw_data/json/token_counts-top200.json"),
       tokenStore,
       wikipediaToDBpediaClosure,
       resStore
-    )
+    ).toList
 
     //ids are token ids, vals are resID --> tokenWeight
     //lazy val invertedIndex: Map[Int, Map[Int, Double]] = new HashMap[Int, Map[Int, Double]]()
@@ -169,9 +161,9 @@ object BuildIndexTest {
 
         tokens.foreach {
           (t: Token) => {
-             //System.out.println("The token is: "+ t.name)
-             //System.out.println("its id is: " + t.id)
-             //System.out.println("Its value is: " + weights(i))
+             //println("The token is: "+ t.name)
+             //println("its id is: " + t.id)
+             //println("Its value is: " + weights(i))
              val tokenId = t.id
              //Map[tokenId[resourceId, weight]]
              //val index = new HashMap[Int, Double]
@@ -179,10 +171,14 @@ object BuildIndexTest {
              //TODO: fix hard-coded tf-idf threshold below (changed to test indexing efficiency)
              //if (weights(i) > 1){
 
-                val index = esaMemoryIndexer.invertedIndex.index.getOrElse(tokenId, new HashMap[Int,Double]())
-                index.put(resId, weights(i))
-                esaMemoryIndexer.addResourceSet(tokenId, index)
+                //val index = esaMemoryIndexer.invertedIndex.index.getOrElse(tokenId, new HashMap[Int,Double]())
+                //index.put(resId, weights(i))
+                //esaMemoryIndexer.addResourceSet(tokenId, index)
 
+
+                //println("resId is " + resId + " weights(i) is " + weights(i))
+                val doc = (resId, weights(i))
+                esaMemoryIndexer.addResource(tokenId, doc)
                /*
                var index = new mutable.HashMap[Int, Double]()
                //if (invertedIndex.contains(tokenId)) {
@@ -200,26 +196,52 @@ object BuildIndexTest {
 
       }
     }
-    //TODO: testing here
+    //sort every list in the Inverted index and retain only topN elements
+    esaMemoryIndexer.invertedIndex.topN(25)
+
+    /*
+    //TEST - working
+    var c =0
+    esaMemoryIndexer.invertedIndex.docs.foreach {
+      case (null) =>
+      case (list: ListBuffer[(Int, Double)]) => {
+        println("For token: " + tokenStore.getTokenByID(c))
+        list.foreach {
+          case (d: Int, w: Double) => {
+            println("doc is: " + d + ", weight is: " + w)
+
+          }
+        }
+        c += 1
+      }
+
+    }
+    */
+
+    //TODO: persistence testing
     //esaMemoryIndexer.writeInvertedIndex()
     //invertedIndex.commit()
     //val iiTest = new JDBMStore[Int, Map[Int, Double]]("ii.disk")
-    //persistedInvertedIndex.data = invertedIndex.index
 
+    //Now persist the inverted index
 
-    //TODO: create a more efficient method - this repeats loading tokens
-    val docs: Iterator[(DBpediaResource, Array[Token], Array[Double])] =
-      TokenOccurrenceSource.fromJsonFile(new File("raw_data/json/token_counts-top100.json"),
-        tokenStore,
-        wikipediaToDBpediaClosure,
-        resStore
-      )
+    //val baseDir = new File("/home/chris/data/indexes")
+    val testFileName = "/home/chris/data/indexes/iiTest.disk"
+    esaMemoryIndexer.invertedIndex.persistIndex(testFileName)
+
+    val testInvertedIndex = new DiskInvertedIndexStore(testFileName)
+
+    //TEST (I know this token should be there)
+    //testInvertedIndex.printAll(2051863)
 
     //Now the invertedIndex is finished - create the ESAVectorIndex
-    //TODO: iterate over the resource map (iteration code copied from above)
+    //TODO: Change this section to use the disk-backed inverted index
+    //  - (1) load the inverted index (created in another step)
+    //  - (2) read vectors directly from disk
+    //iterate over the resource map (iteration code copied from above)
     println ("now for the vector index...")
     var docCount: Int = 0
-    docs.filter(t => t!=null && t._1 != null).foreach{
+    resourceMap.filter(t => t!=null && t._1 != null).foreach{
       t: Triple[DBpediaResource, Array[Token], Array[Double]] => {
         val Triple(res, tokens, weights) = t
         //println("indexing docs: the resource is: " + res)
@@ -235,17 +257,18 @@ object BuildIndexTest {
         tokens.foreach {
           (tok: Token) => {
             //query the inverted index and sum the scores for each doc
-            val tokId = tok.id
+            //val tokId = tok.id
+            val tokenWeight = weights(i)
 
-            val tokenVector = esaMemoryIndexer.invertedIndex.getResources(tok)
+            val tokensDocVector = esaMemoryIndexer.invertedIndex.getResources(tok)
 
-             if (tokenVector != null) {
+             if (tokensDocVector != null) {
                 //val tokenVector: Map[Int,Double] = invertedIndex.getResources(tok)
-                tokenVector.foreach {case (id: Int, weight: Double) => {
+                tokensDocVector.foreach {case (docId: Int, weight: Double) => {
 
-                   val currentScore: Double = docIndex.getOrElse(tokId, 0.00)
+                   val currentScore: Double = docIndex.getOrElse(docId, 0.00)
                    //sum the weights multiplied by the token's tfidf score in this doc
-                   docIndex.put(tokId, currentScore + (weight * weights(i)))
+                   docIndex.put(docId, currentScore + (weight * tokenWeight))
                    //println("token: " + tok.name)
                    //val newWeight = docIndex.getOrElse(tokId, 0.0)
                    //println("new weight: " + newWeight)
@@ -255,12 +278,22 @@ object BuildIndexTest {
             i+=1
           }
         }
+        //now get the centroid
+        val noTokens = tokens.size
+        docIndex.foreach {
+          case (docId: Int, weight: Double) => {
+            val avgWeight = weight/noTokens
+            docIndex.put(docId, avgWeight)
+          }
+
+        }
         esaMemoryIndexer.addDocOccurrence(res, docIndex)
+        docCount += 1
       }
-      docCount += 1
+
     }
 
-      /*
+
       //TEST
       val vals = esaMemoryIndexer.vectorStore.resources.keys
 
@@ -285,8 +318,9 @@ object BuildIndexTest {
         }
       }
       //END TEST
-      */
 
+
+    /*
       //Now test DBEsaDisambiguator
     println("About to create the disambiguator...")
       val disambiguator = new DBEsaDisambiguator(
@@ -299,6 +333,8 @@ object BuildIndexTest {
         new LuceneTokenizer(new EnglishAnalyzer(Version.LUCENE_36)),
         new LinearRegressionMixture()
         )
+      */
+
       /*
       val spotter = new WikiMarkupSpotter()
       //val t = new Text("[[Berlin]] is the capital of [[Germany]].")
@@ -315,6 +351,8 @@ object BuildIndexTest {
     }
       //println(disambiguator.bestK(p, 10))
      */
+
+    /*
     //TODO: now use EvaluateParagraphDisambiguator to test on MilneWitten
     //(1) create the corpus from directory
     val mw = MilneWittenCorpus.fromDirectory(new File("raw_data/MilneWitten-wikifiedStories"))
@@ -327,7 +365,7 @@ object BuildIndexTest {
 
     //(2) create the EvaluateParagraphDisambiguator
     EvaluateParagraphDisambiguator.evaluate(mw, disambiguator, pw)
-
+     */
 
 
     //TODO: persist invertedIndex and EsaVectorIndex
