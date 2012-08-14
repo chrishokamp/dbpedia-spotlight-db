@@ -14,6 +14,7 @@ class DiskSurfaceFormStore(file: String) extends SurfaceFormStore {
 
   val jdbm = new JDBMStore[String, Triple[Int, Int, Int]](file)
 
+
   def getSurfaceForm(surfaceform: String): SurfaceForm = {
     val sfc = jdbm.get(surfaceform)
     if (sfc == null)

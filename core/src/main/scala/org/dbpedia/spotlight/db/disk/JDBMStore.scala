@@ -1,6 +1,7 @@
 package org.dbpedia.spotlight.db.disk
 
 import net.kotek.jdbm.DBMaker
+import java.lang.NoSuchFieldError
 
 /**
  * @author Joachim Daiber
@@ -22,6 +23,7 @@ class JDBMStore[A, B](databaseFile: String) {
     db.commit()
   }
 
+  //TODO - why is this returning NoSuchFieldError?
   def get(key: A): B = data.get(key)
 
 

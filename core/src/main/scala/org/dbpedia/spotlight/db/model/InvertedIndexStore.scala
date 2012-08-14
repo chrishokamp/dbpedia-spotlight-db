@@ -8,8 +8,8 @@ import collection.mutable
  */
 
 trait InvertedIndexStore {
-  //TODO: confirm logic behind making this mutable
   def getResources (token: Token): mutable.HashMap[Int, Double]
+  //def getResources (token: Token): Map[Int, Double]
   def getDocFreq (token: Token): Int
 
 

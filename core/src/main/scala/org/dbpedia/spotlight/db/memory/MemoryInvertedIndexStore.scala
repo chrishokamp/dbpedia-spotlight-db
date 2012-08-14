@@ -7,6 +7,8 @@ import com.esotericsoftware.kryo.Kryo
 import com.esotericsoftware.kryo.io.Output
 import collection.mutable.ListBuffer
 import org.dbpedia.spotlight.db.disk.JDBMStore
+import org.apache.commons.lang.NotImplementedException
+import org.apache.commons.logging.LogFactory
 
 /**
  * @author Chris Hokamp
@@ -17,15 +19,24 @@ class MemoryInvertedIndexStore
   with InvertedIndexStore
   with DocFrequencyStore {
 
+
+  //private val LOG = LogFactory.getLog(this.getClass)
+
   //creating new instances could be problematic with serialization
   var docFreq = new mutable.HashMap[Int, Int]
-  var index = new mutable.HashMap[Int, mutable.HashMap[Int, Double]]
+  //var index = new mutable.HashMap[Int, mutable.HashMap[Int, Double]]
 
   //TODO: testing here - vals in array index with limited size - i.e. 25
   var docs: Array[ListBuffer[(Int,Double)]] = null //tokenId[docIds]
   //var weights: Array[ListBuffer[Double]] = null //tokenId[weightsForEachDoc]
   //TODO: add the docFreq index
   def size =  docFreq.size
+  /*
+  // this is for testing with the disk-backed store...
+  def getResources (token: Token): Map[Int, Double] = {
+    throw new NotImplementedException()
+  }
+  */
 
 
   //TODO: change to map (not mutable.HashMap)
@@ -43,6 +54,7 @@ class MemoryInvertedIndexStore
     }
     docWeights
   }
+
 
   //TODO: this shouldn't be in this object - move to indexer
   def addAll (tokenId: Int, documents: mutable.HashMap[Int, Double]) {
@@ -69,13 +81,13 @@ class MemoryInvertedIndexStore
     docs.foreach {
       (map: ListBuffer[(Int,Double)]) => {
         if (map != null && map.length > noToKeep) {
-          var sorted = map.sortWith(_._2 > _._2)
-          sorted = sorted.dropRight(noToKeep)
-          docs(i) = sorted
+          val sorted = map.sortBy(_._2)
+          val truncated = sorted.drop(sorted.length-noToKeep)
+          docs(i) = truncated
         }
-        i += 1
-      }
 
+      }
+      i += 1
     }
   }
 
@@ -103,12 +115,16 @@ class MemoryInvertedIndexStore
         }
       }
       tokenId += 1
+      if (tokenId % 10000 == 0) {
+        LOG.info("Persisted %d tokens...".format(tokenId))
+        diskMap.commit()
+      }
     }
     diskMap.commit()
 
   }
 
-  /* COMMENTING WHILE TESTING ARRAY INDEX
+  /*
   def getResources (token: Token): mutable.HashMap[Int, Double] = {
 
      val id = token.id
@@ -119,11 +135,14 @@ class MemoryInvertedIndexStore
        vect
      }
   }
+  */
 
+  /*
   def add (tokenId: Int, docs: mutable.HashMap[Int, Double]) {
     index.put(tokenId, docs)
   }
   */
+
 
 
 

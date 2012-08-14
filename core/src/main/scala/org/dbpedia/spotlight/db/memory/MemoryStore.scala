@@ -193,9 +193,7 @@ object MemoryStore {
 
 
   def loadEsaVectorStore(in: InputStream, resourceStore: MemoryResourceStore): MemoryEsaVectorStore = {
-    val s = load[MemoryEsaVectorStore](in, classOf[MemoryEsaVectorStore].getSimpleName)
-    s.resourceStore = resourceStore
-    s
+    load[MemoryEsaVectorStore](in, classOf[MemoryEsaVectorStore].getSimpleName)
   }
 
 

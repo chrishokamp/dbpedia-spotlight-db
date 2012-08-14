@@ -5,6 +5,7 @@ import org.dbpedia.spotlight.model.Token
 import org.dbpedia.spotlight.exceptions.DBpediaResourceNotFoundException
 
 
+
 /**
  * @author Chris Hokamp
  */
@@ -14,11 +15,17 @@ class DiskInvertedIndexStore(file: String) /*extends InvertedIndexStore*/ {
   val jdbm = new JDBMStore[Int, Map[Int, Double]](file)
 
   def getResources (token: Token): Map[Int,Double] = {
-      val resources = jdbm.get(token.id)
-      if (resources == null)
-        throw new DBpediaResourceNotFoundException("Token not found: " + token.name)
-
-      resources
+      //TEST
+      //println("the token is: " +token.name)
+      try {
+        val resources = jdbm.get(token.id)
+        if (resources == null) {
+          null
+        }
+        resources
+      } catch {
+        case e: NoSuchFieldError => null
+      }
   }
 
   def getDocFreq (token: Token): Int = {
@@ -30,12 +37,15 @@ class DiskInvertedIndexStore(file: String) /*extends InvertedIndexStore*/ {
     }
   }
 
-    //TEST
+    //TEST - TODO: to fix, add try/catch like in getResources above
     def printAll(i: Int) {
       val testMap = jdbm.get(i)
-      testMap.foreach {
-        case (k: Int, v: Double) => {
-          println ("k is : " +k + " v is: " + v)
+      if (testMap != null) {
+        testMap.foreach {
+          case null =>
+          case (k: Int, v: Double) => {
+            println ("k is : " +k + " v is: " + v)
+         }
         }
       }
     }
