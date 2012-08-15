@@ -79,11 +79,18 @@ class MemoryInvertedIndexStore
   def topN (noToKeep: Int) {
     var i = 0
     docs.foreach {
+
       (map: ListBuffer[(Int,Double)]) => {
-        if (map != null && map.length > noToKeep) {
+        if (map != null) {
+          //TODO: temporary! add doc freq here
+          //docFreq.put(i, map.length)
+          if(map.length > noToKeep) {
+
+
           val sorted = map.sortBy(_._2)
           val truncated = sorted.drop(sorted.length-noToKeep)
           docs(i) = truncated
+          }
         }
 
       }

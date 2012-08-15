@@ -84,7 +84,7 @@ object BuildIndexTest {
     //Note: there were problems with garbage collection - put back to Iterator for now
     val resourceMap: Iterator[(DBpediaResource, Array[Token], Array[Double])] =
       //TokenOccurrenceSource.fromJsonFile(new File("raw_data/json/top150-50000docs.json"),
-      TokenOccurrenceSource.fromJsonFile(new File("raw_data/json/token_counts-top150.json"),
+      TokenOccurrenceSource.fromJsonFile(new File("raw_data/json/token_counts-top150-nofilter.json"),
       tokenStore,
       wikipediaToDBpediaClosure,
       resStore
@@ -139,7 +139,7 @@ object BuildIndexTest {
     }
     //sort every list in the Inverted index and retain only topN elements
     //TODO: testing here - make sure that the sort is correct
-    esaMemoryIndexer.invertedIndex.topN(25)
+    esaMemoryIndexer.invertedIndex.topN(15)
 
     /*
     //TEST - working
@@ -192,7 +192,7 @@ object BuildIndexTest {
     LOG.info("now for the vector index...")
     val dataMap: Iterator[(DBpediaResource, Array[Token], Array[Double])] =
     //TokenOccurrenceSource.fromJsonFile(new File("raw_data/json/top150-50000docs.json"),
-    TokenOccurrenceSource.fromJsonFile(new File("raw_data/json/token_counts-top150.json"),
+    TokenOccurrenceSource.fromJsonFile(new File("raw_data/json/token_counts-top150-nofilter.json"),
         tokenStore,
         wikipediaToDBpediaClosure,
         resStore
@@ -257,8 +257,8 @@ object BuildIndexTest {
             docIndex.put(docId, avgWeight)
           }
         }
-        //TESTING - threshold hard-coded for now
-        val topN = 100
+        //TESTING - threshold hard-coded for now - update: preliminary tests appear to work
+        val topN = 70
         val topList = docIndex.toList.sortBy(_._2).drop(docIndex.size-topN)
         val topMap = new HashMap[Int, Double]()
         topList.foreach {
@@ -268,8 +268,6 @@ object BuildIndexTest {
         }
 
         esaMemoryIndexer.addDocOccurrence(res, topMap)
-
-
       }
     }
 
