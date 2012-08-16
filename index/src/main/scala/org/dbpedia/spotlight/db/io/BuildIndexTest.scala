@@ -84,7 +84,7 @@ object BuildIndexTest {
     //Note: there were problems with garbage collection - put back to Iterator for now
     val resourceMap: Iterator[(DBpediaResource, Array[Token], Array[Double])] =
       //TokenOccurrenceSource.fromJsonFile(new File("raw_data/json/top150-50000docs.json"),
-      TokenOccurrenceSource.fromJsonFile(new File("raw_data/json/token_counts-top150-nofilter.json"),
+      TokenOccurrenceSource.fromJsonFile(new File("raw_data/json/token_counts-20120601-top150.json"),
       tokenStore,
       wikipediaToDBpediaClosure,
       resStore
@@ -140,7 +140,18 @@ object BuildIndexTest {
     //sort every list in the Inverted index and retain only topN elements
     //TODO: testing here - make sure that the sort is correct
     esaMemoryIndexer.invertedIndex.topN(20)
+
+    /*
     //TODO: testing Kryo persistence of inverted index
+    esaMemoryIndexer.writeInvertedIndex()
+
+    Update: getting heap space error here - ask Jo about this??
+    val testii = MemoryStore.loadInvertedIndexStore(new FileInputStream("data/invertedIndex.mem"))
+    //TEST
+    val indexSize = testii.resources.size
+    println("the size of testii is: " + indexSize)
+    */
+
     /*
     //TEST - working
     var c =0
@@ -182,7 +193,7 @@ object BuildIndexTest {
     }
     */
 
-    /*
+
     //Now the invertedIndex is finished - create the ESAVectorIndex
     //TODO: Change this section to use the disk-backed inverted index
     //  - (1) load the inverted index (created in another step)
@@ -192,7 +203,7 @@ object BuildIndexTest {
     LOG.info("now for the vector index...")
     val dataMap: Iterator[(DBpediaResource, Array[Token], Array[Double])] =
     //TokenOccurrenceSource.fromJsonFile(new File("raw_data/json/top150-50000docs.json"),
-    TokenOccurrenceSource.fromJsonFile(new File("raw_data/json/token_counts-top150-nofilter.json"),
+    TokenOccurrenceSource.fromJsonFile(new File("raw_data/json/token_counts-20120601-top150.json"),
         tokenStore,
         wikipediaToDBpediaClosure,
         resStore
@@ -384,7 +395,7 @@ object BuildIndexTest {
 
   //
       */
-      */
+
 
   }
 }

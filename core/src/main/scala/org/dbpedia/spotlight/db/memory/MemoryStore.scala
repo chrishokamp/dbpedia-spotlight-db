@@ -132,19 +132,6 @@ object MemoryStore {
       kryo
     }
   )
-   /*
-  //TODO: test for EsaVectorStore
-  kryos.put(classOf[MemoryEsaVectorStore].getSimpleName,
-  {
-    val kryo = new Kryo()
-    kryo.setRegistrationRequired(true)
-    //WRONG
-    kryo.register(classOf[MemoryEsaVectorStore], new KryoSerializableSerializer())
-
-    kryo
-  }
-  )
-  */
 
   def load[T](in: InputStream, simpleName: String): T = {
 
@@ -190,9 +177,6 @@ object MemoryStore {
   def loadInvertedIndexStore (in: InputStream): MemoryInvertedIndexStore = {
     load[MemoryInvertedIndexStore](in, classOf[MemoryInvertedIndexStore].getSimpleName())
   }
-
-
-
 
   def loadEsaVectorStore(in: InputStream, resourceStore: MemoryResourceStore): MemoryEsaVectorStore = {
     load[MemoryEsaVectorStore](in, classOf[MemoryEsaVectorStore].getSimpleName)

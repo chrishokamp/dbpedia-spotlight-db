@@ -35,8 +35,8 @@ class MemoryInvertedIndexStore
   //(2) serialize into arrays by doing map.unzip --> (a, b) a.toArray, b.toArray
   //Working...
   //***Note: this is currently only useful as a way to persist the index
-  @transient
-  var resStore: ResourceStore = null
+  //@transient
+  //var resStore: ResourceStore = null
 
   var resources: Array[Array[Int]] = null
   var weights: Array[Array[Double]] = null
@@ -84,7 +84,11 @@ class MemoryInvertedIndexStore
   //TODO: the vectors are truncated, so each token has the same df right now (i.e. 25)
   def getDocFreq (token: Token):  Int = {
     val i = token.id
-    docs(i).size
+    var docFreq = 100000
+    if (docs(i) != null) {
+      docFreq = docs(i).size
+    }
+    docFreq
   }
 
   //Sort each list by weight, and keep only top N tokens
@@ -116,7 +120,8 @@ class MemoryInvertedIndexStore
     weights = new Array[Array[Double]](docs.size)
 
     var i = 0
-    docs.foreach { case (listVector: ListBuffer[(Int, Double)]) => {
+    docs.foreach {
+      case (listVector: ListBuffer[(Int, Double)]) => {
       if (listVector != null) {
 
         val subLen = listVector.length
@@ -133,8 +138,8 @@ class MemoryInvertedIndexStore
         resources(i) = resArray
         weights(i) = weightArray
       }
-
-    }
+      }
+      case _ => {}
       i += 1
     }
   }
