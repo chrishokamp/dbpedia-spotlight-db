@@ -123,13 +123,15 @@ object MemoryStore {
 
   //TODO: test for inverted index - Serializing a nested map is tricky!
   kryos.put(classOf[MemoryInvertedIndexStore].getSimpleName,
-  {
-    val kryo = new Kryo()
-    //kryo.setRegistrationRequired(true)
+    {
+      val kryo = new Kryo()
+      kryo.setRegistrationRequired(true)
 
-    //kryo.register(classOf[HashMap[Int, HashMap[Int, Double]]], new DefaultSerializers.CollectionsSingletonMapSerializer())
-    kryo
-  })
+      kryo.register(classOf[MemoryInvertedIndexStore], new KryoSerializableSerializer())
+
+      kryo
+    }
+  )
    /*
   //TODO: test for EsaVectorStore
   kryos.put(classOf[MemoryEsaVectorStore].getSimpleName,

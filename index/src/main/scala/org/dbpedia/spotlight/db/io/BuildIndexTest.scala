@@ -139,8 +139,8 @@ object BuildIndexTest {
     }
     //sort every list in the Inverted index and retain only topN elements
     //TODO: testing here - make sure that the sort is correct
-    esaMemoryIndexer.invertedIndex.topN(15)
-
+    esaMemoryIndexer.invertedIndex.topN(20)
+    //TODO: testing Kryo persistence of inverted index
     /*
     //TEST - working
     var c =0
@@ -182,7 +182,7 @@ object BuildIndexTest {
     }
     */
 
-
+    /*
     //Now the invertedIndex is finished - create the ESAVectorIndex
     //TODO: Change this section to use the disk-backed inverted index
     //  - (1) load the inverted index (created in another step)
@@ -258,7 +258,7 @@ object BuildIndexTest {
           }
         }
         //TESTING - threshold hard-coded for now - update: preliminary tests appear to work
-        val topN = 70
+        val topN = 75
         val topList = docIndex.toList.sortBy(_._2).drop(docIndex.size-topN)
         val topMap = new HashMap[Int, Double]()
         topList.foreach {
@@ -384,7 +384,7 @@ object BuildIndexTest {
 
   //
       */
-
+      */
 
   }
 }

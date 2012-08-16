@@ -58,21 +58,30 @@ class EsaStoreIndexer(override val baseDir: File)
   //TODO: working to convert the index to Array representation of the Map
   //adds the resource set and the doc frequency
   def addResourceSet (tokenId: Int, docs: mutable.HashMap[Int, Double]) {
-    //TODO: index doc freq using an array
-    val docFreq = docs.size
-    //invertedIndex.index.put(tokenId, docs)
-    //TODO: these methods are currently in the wrong place
+    //TODO: this methods is currently in the wrong place
     invertedIndex.addAll(tokenId, docs)
-    invertedIndex.docFreq.put(tokenId, docFreq)
   }
 
+  //TODO: REIMPLEMENT map in inverted index - the list isn't doing anything!!
+  def addAllTokens (allTokens: Map[Int, Map[Int, Double]]) {
+  //return indexed arrays (mimics a map) for each token in index
+  //this will make the index persistable
+    allTokens.foreach {case(tokenId, resWeights) => {
+      val (r, w) = resWeights.unzip
+      invertedIndex.resources(tokenId) = r.toArray
+      invertedIndex.weights(tokenId) = w.toArray
+    }
+    }
 
-  //TODO: this doesn't work right now
-  /*
+  }
+
+  //TODO: TEST ASAP
+
   def writeInvertedIndex () {
+    invertedIndex.docsToNestedArrays
     MemoryStore.dump(invertedIndex, new File(baseDir, "invertedIndex.mem"))
   }
-  */
+
 
   def addDocFreq (token: Token, count: Int) {
   //  val id: Int = token.id
@@ -89,15 +98,15 @@ class EsaStoreIndexer(override val baseDir: File)
     throw new NotImplementedException()
   }
 
-  def addDocOccurrence(resource: DBpediaResource, resourceWeights: mutable.Map[Int, Double]) {
-    val id = resource.id
-    vectorStore.resources.put(id, resourceWeights)
-  }
-
   def createEsaVectorStore(n: Int) {
     throw new NotImplementedException()
     //vectorStore.resources = new Array[Array[Int]](n)
     //vectorStore.weights = new Array[Array[Double]](n)
+  }
+
+  def addDocOccurrence(resource: DBpediaResource, resourceWeights: mutable.Map[Int, Double]) {
+    val id = resource.id
+    vectorStore.resources.put(id, resourceWeights)
   }
 
   def addDocOccurrences(occs: Map[Token, Map[Int, Double]]) {
