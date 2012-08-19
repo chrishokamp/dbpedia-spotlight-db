@@ -11,9 +11,11 @@ import org.dbpedia.spotlight.db.memory.{MemoryInvertedIndexStore, MemoryEsaVecto
 import java.lang.{Short, String}
 import org.apache.commons.lang.NotImplementedException
 import java.util
+import org.dbpedia.spotlight.eval.filter.occurrences.RedirectResolveFilter
+import org.dbpedia.spotlight.model.OccurrenceFilter
 //import collection.mutable
 
-import org.dbpedia.spotlight.eval.corpus.MilneWittenCorpus
+import org.dbpedia.spotlight.eval.corpus.{CSAWCorpus, MilneWittenCorpus}
 
 
 import scala.collection.JavaConversions._
@@ -269,7 +271,7 @@ object BuildIndexTest {
           }
         }
         //TESTING - threshold hard-coded for now - update: preliminary tests appear to work
-        val topN = 75
+        val topN = 100
         val topList = docIndex.toList.sortBy(_._2).drop(docIndex.size-topN)
         val topMap = new HashMap[Int, Double]()
         topList.foreach {
@@ -346,16 +348,36 @@ object BuildIndexTest {
 
     //TODO: now use EvaluateParagraphDisambiguator to test on MilneWitten
     //(1) create the corpus from directory
-    val mw = MilneWittenCorpus.fromDirectory(new File("raw_data/MilneWitten-wikifiedStories"))
-    val testSourceName = mw.name
+
+    //Milne-Witten
+    //val mw = MilneWittenCorpus.fromDirectory(new File("raw_data/MilneWitten-wikifiedStories"))
+    //val testSourceName = mw.name
+
     val dName = disambiguator.name.replaceAll("""[.*[?/<>|*:\"{\\}].*]""","_")
+
     //val tsvOut = new TSVOutputGenerator(new PrintWriter("%s-%s-%s.milne-witten.log".format(testSourceName,dName,EvalUtils.now())))
     //val arffOut = new TrainingDataOutputGenerator()
     //val outputs = List(tsvOut)
-    val pw = new PrintWriter("%s-%s-%s.milne-witten.log".format(testSourceName,dName,EvalUtils.now()))
+    //val pw = new PrintWriter("%s-%s-%s.milne-witten.log".format(testSourceName,dName,EvalUtils.now()))
+
+    //CSAW
+    val csaw = CSAWCorpus.fromDirectory(new File("raw_data/csaw"))
+    val testSourceName2 = csaw.name
+    //val cs = new PrintWriter("%s-%s-%s.csaw.log".format(testSourceName2,dName,EvalUtils.now()))
+
+    //Make the occ filters
+    val redirectTCFileName  = if (args.size>1) args(1) else "data/redirects_tc.tsv" //produced by ExtractCandidateMap
+
+    val occFilters = List(RedirectResolveFilter.fromFile(new File(redirectTCFileName)))
+    val tsvOut = new TSVOutputGenerator(new PrintWriter("%s-%s-%s.milne-witten.log".format(testSourceName2,dName,EvalUtils.now())))
+    val outputs = List(tsvOut)
+
 
     //(2) create the EvaluateParagraphDisambiguator
-    EvaluateParagraphDisambiguator.evaluate(mw, disambiguator, pw)
+    //EvaluateParagraphDisambiguator.evaluate(mw, disambiguator, pw)
+    EvaluateParagraphDisambiguator.evaluate(csaw, disambiguator, outputs, occFilters)
+
+
 
 
 

@@ -1,6 +1,6 @@
 package org.dbpedia.spotlight.filter.occurrences
 
-import org.dbpedia.spotlight.model.{SurfaceForm, DBpediaResource, DBpediaResourceOccurrence}
+import org.dbpedia.spotlight.model.{OccurrenceFilter, SurfaceForm, DBpediaResource, DBpediaResourceOccurrence}
 
 /**
  * Copyright 2011 Pablo Mendes, Max Jakob

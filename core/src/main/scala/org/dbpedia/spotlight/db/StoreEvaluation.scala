@@ -4,7 +4,7 @@ import collection.mutable.ListBuffer
 
 import memory._
 import model._
-import util.Random
+import java.util.Random
 import java.io.FileInputStream
 import scala.Predef._
 import org.apache.lucene.analysis.standard.StandardAnalyzer

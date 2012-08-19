@@ -16,7 +16,7 @@
 
 package org.dbpedia.spotlight.filter.occurrences
 
-import org.dbpedia.spotlight.model.{DBpediaResource, DBpediaResourceOccurrence}
+import org.dbpedia.spotlight.model.{OccurrenceFilter, DBpediaResource, DBpediaResourceOccurrence}
 
 /**
  *

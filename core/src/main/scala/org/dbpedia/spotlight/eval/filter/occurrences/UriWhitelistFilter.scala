@@ -14,10 +14,14 @@
  * limitations under the License.
  */
 
-package org.dbpedia.spotlight.filter.occurrences
+package org.dbpedia.spotlight.eval.filter.occurrences
 
-import org.dbpedia.spotlight.model.{OccurrenceFilter, DBpediaResourceOccurrence}
-import org.dbpedia.spotlight.model.OccurrenceFilter
+import org.dbpedia.spotlight.model.DBpediaResourceOccurrence
+import io.Source
+import org.apache.commons.logging.LogFactory
+import java.io.File
+import org.dbpedia.spotlight.eval.filter.occurrences.OccurrenceFilter
+
 /**
  * Class that takes a whitelist of URIs to allow for indexing.
  * Used during indexing to eliminate redirects and disambiguations, keeping only URIs that denote entities/concepts.
@@ -35,4 +39,14 @@ class UriWhitelistFilter(val whitelistedUris : Set[String]) extends OccurrenceFi
         }
     }
 
+}
+
+object UriWhitelistFilter {
+  private val LOG = LogFactory.getLog(this.getClass)
+
+  def fromFile(conceptURIsFileName: File) = {
+    LOG.info("Loading concept URIs from " + conceptURIsFileName + "...")
+    val conceptUrisSet = Source.fromFile(conceptURIsFileName, "UTF-8").getLines.toSet
+    new UriWhitelistFilter(conceptUrisSet)
+  }
 }

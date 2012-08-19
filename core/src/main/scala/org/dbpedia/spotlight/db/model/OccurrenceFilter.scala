@@ -14,22 +14,14 @@
  * limitations under the License.
  */
 
-package org.dbpedia.spotlight.filter.occurrences
+package org.dbpedia.spotlight.model
 
-import org.dbpedia.spotlight.model.{OccurrenceFilter, DBpediaResource, DBpediaResourceOccurrence}
+import org.dbpedia.spotlight.filter.Filter
 
-
-class NumberResourcesFilter extends OccurrenceFilter {
-
-    val numbersRegex = "^\\d+$"
-
-    def touchOcc(occ : DBpediaResourceOccurrence) : Option[DBpediaResourceOccurrence] = {
-        if(occ.resource.uri.matches(numbersRegex)) {
-            Some(occ)
-        }
-        else {
-            None
-        }
-    }
-
-}
+/**
+ * Filter occurrences based on the properties of the data, for example the to resolve redirect URIs, to filter out very long surface forms, etc.
+ * These filters were made to be applied before/during indexing.
+ *
+ * @author maxjakob
+ */
+trait OccurrenceFilter extends Filter
