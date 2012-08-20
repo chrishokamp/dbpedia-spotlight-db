@@ -20,12 +20,12 @@ reducers=$4
 #mahout seqdirectory --input $input_dir  --output $output_dir 
 
 #output file's name is the input to seq2sparse
-mahout seq2sparse --input $input_dir --output $output_dir
+#mahout seq2sparse --input $input_dir --output $output_dir
 
-mahout rowid --input $output_dir/tfidf-vectors --output $output_dir
+#mahout rowid --input $output_dir/tfidf-vectors --output $output_dir
 
 #this prepares V_t to become an inverted index of terms
-mahout ssvd --rank $dimensions -vHalfSigma --reduceTasks $reducers --input $output_dir/matrix --output $output_dir
+mahout ssvd --rank $dimensions --vHalfSigma --reduceTasks $reducers --input $output_dir/matrix --output $output_dir
 
 #The rest of this script is used for "pure LSA"
 #mahout ssvd --rank $dimensions --reduceTasks $reducers --input $output_dir/matrix --output $output_dir
@@ -42,5 +42,5 @@ mahout ssvd --rank $dimensions -vHalfSigma --reduceTasks $reducers --input $outp
 #echo path to transpose file: $output_dir/$transpose_dir/part-00000
 
 # the temp file may be left over
-#rm -r temp
+rm -r temp
 
