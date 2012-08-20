@@ -19,11 +19,8 @@ class DBEsaDisambiguator (
   surfaceFormStore: SurfaceFormStore,
   resourceStore: ResourceStore,
   candidateMap: CandidateMapStore,
-  //Chris: testing...
   invertedIndex: InvertedIndexStore,
   esaVectorStore: EsaVectorStore,
-  //contextStore: ContextStore,
-  //Chris: END TESTING
   tokenizer: Tokenizer,
   mixture: Mixture
   ) extends ParagraphDisambiguator {
@@ -97,7 +94,6 @@ class DBEsaDisambiguator (
 
         acc + (sfOcc -> candidateRes.toList)
       })
-
 
     // step2: query once for the paragraph context, get scores for each candidate resource
     val contextScores = getScores(paragraph.text, allCandidateResources)

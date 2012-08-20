@@ -6,16 +6,18 @@ import disk.{DiskInvertedIndexStore, JDBMStore}
 import org.dbpedia.spotlight.db.memory.{MemoryInvertedIndexStore, MemoryEsaVectorStore, MemoryStore}
 
 import java.lang.{Short, String}
-import org.dbpedia.spotlight.eval.filter.occurrences.RedirectResolveFilter
+import org.dbpedia.spotlight.eval.filter.occurrences.{UriWhitelistFilter, RedirectResolveFilter}
 
 import org.dbpedia.spotlight.eval.corpus.{CSAWCorpus, MilneWittenCorpus}
 
 import org.dbpedia.spotlight.model._
+import org.dbpedia.spotlight.model.OccurrenceFilter
+
 import scala.{Array, Int}
 import collection.mutable.HashMap
 import org.apache.lucene.analysis.en.EnglishAnalyzer
 import org.apache.lucene.util.Version
-import org.dbpedia.spotlight.disambiguate.mixtures.LinearRegressionMixture
+import org.dbpedia.spotlight.disambiguate.mixtures.{OnlySimScoreMixture, LinearRegressionMixture}
 import org.apache.commons.logging.LogFactory
 import org.dbpedia.spotlight.eval.{EvalUtils, TSVOutputGenerator, EvaluateParagraphDisambiguator}
 
@@ -23,8 +25,6 @@ import org.dbpedia.spotlight.eval.{EvalUtils, TSVOutputGenerator, EvaluateParagr
  * @author Chris Hokamp
  *
  * This class runs ESA indexing and disambiguation evaluation from beginning to end
- *
- *
  */
 
 object IndexEsa {
@@ -47,11 +47,10 @@ object IndexEsa {
       new FileInputStream(new File("raw_data/pig/disambiguations_en.nt"))
     )
 
-    //TODO: TESTING with TOLIST - check this - update: appears to be working
     //Note: there were problems with garbage collection - put back to Iterator for now
     val resourceMap: Iterator[(DBpediaResource, Array[Token], Array[Double])] =
-    //TokenOccurrenceSource.fromJsonFile(new File("raw_data/json/top150-50000docs.json"),
-      TokenOccurrenceSource.fromJsonFile(new File("raw_data/json/token_counts-20120601-top150.json"),
+    TokenOccurrenceSource.fromJsonFile(new File("raw_data/json/token_counts-top150-nofilter.json"),
+      //TokenOccurrenceSource.fromJsonFile(new File("raw_data/json/token_counts-20120601-top150.json"),
         tokenStore,
         wikipediaToDBpediaClosure,
         resStore
@@ -96,36 +95,17 @@ object IndexEsa {
     }
     //sort every list in the Inverted index and retain only topN elements
     //TODO: testing here - make sure that the sort is correct
-    esaMemoryIndexer.invertedIndex.topN(10)
+    esaMemoryIndexer.invertedIndex.topN(15)
 
     /*
     //TODO: testing Kryo persistence of inverted index
     esaMemoryIndexer.writeInvertedIndex()
 
-    Update: getting heap space error here - ask Jo about this??
+    Update: getting heap space error here
     val testii = MemoryStore.loadInvertedIndexStore(new FileInputStream("data/invertedIndex.mem"))
     //TEST
     val indexSize = testii.resources.size
     println("the size of testii is: " + indexSize)
-    */
-
-    /*
-    //TEST - working
-    var c =0
-    esaMemoryIndexer.invertedIndex.docs.foreach {
-      case (null) =>
-      case (list: ListBuffer[(Int, Double)]) => {
-        println("For token: " + tokenStore.getTokenByID(c))
-        list.foreach {
-          case (d: Int, w: Double) => {
-            println("doc is: " + d + ", weight is: " + w)
-
-          }
-        }
-        c += 1
-      }
-
-    }
     */
 
     /*
@@ -134,7 +114,6 @@ object IndexEsa {
     //invertedIndex.commit()
     //val iiTest = new JDBMStore[Int, Map[Int, Double]]("ii.disk")
 
-    //BEGIN PERSISTING InvertedIndex
     //Now persist the inverted index
     //val baseDir = new File("/home/chris/data/indexes")
     val testFileName = "/home/chris/data/indexes/iiTest.disk"
@@ -144,23 +123,23 @@ object IndexEsa {
     val testInvertedIndex = new DiskInvertedIndexStore("/home/chris/data/indexes/iiTest.disk")
     */
     /*
-    //TEST (I know this token should be there)
     for (i <- 1 to 200000) {
       testInvertedIndex.printAll(i)
     }
     */
 
 
-    /*Now the invertedIndex is finished - create the ESAVectorIndex
+    /*
+    Now the invertedIndex is finished - create the ESAVectorIndex
       - (1) load the inverted index (created in another step)
       - (2) read vectors directly from disk
       - (3) iterate over the resource map (iteration code copied from above)
     */
-    //println ("now for the vector index...")
     LOG.info("now for the vector index...")
     val dataMap: Iterator[(DBpediaResource, Array[Token], Array[Double])] =
-    //TokenOccurrenceSource.fromJsonFile(new File("raw_data/json/top150-50000docs.json"),
-      TokenOccurrenceSource.fromJsonFile(new File("raw_data/json/token_counts-20120601-top150.json"),
+      //TokenOccurrenceSource.fromJsonFile(new File("raw_data/json/top150-50000docs.json"),
+      //TokenOccurrenceSource.fromJsonFile(new File("raw_data/json/token_counts-20120601-top150.json"),
+        TokenOccurrenceSource.fromJsonFile(new File("raw_data/json/token_counts-top150-nofilter.json"),
         tokenStore,
         wikipediaToDBpediaClosure,
         resStore
@@ -217,7 +196,7 @@ object IndexEsa {
           }
         }
         //TESTING - threshold hard-coded for now
-        val topN = 50
+        val topN = 65
         val topList = docIndex.toList.sortBy(_._2).drop(docIndex.size - topN)
         val topMap = new HashMap[Int, Double]()
         topList.foreach {
@@ -243,19 +222,16 @@ object IndexEsa {
       esaMemoryIndexer.invertedIndex,
       esaMemoryIndexer.vectorStore,
       new LuceneTokenizer(new EnglishAnalyzer(Version.LUCENE_36)),
-      new LinearRegressionMixture()
+      //new LinearRegressionMixture()
+      new OnlySimScoreMixture()
     )
 
     //Milne-Witten
-    //val mw = MilneWittenCorpus.fromDirectory(new File("raw_data/MilneWitten-wikifiedStories"))
-    //val testSourceName = mw.name
+    val mw = MilneWittenCorpus.fromDirectory(new File("raw_data/MilneWitten-wikifiedStories"))
+    val testSourceName = mw.name
+    //val pw = new PrintWriter("%s-%s-%s.milne-witten.log".format(testSourceName,dName,EvalUtils.now()))
 
     val dName = disambiguator.name.replaceAll( """[.*[?/<>|*:\"{\\}].*]""", "_")
-
-    //val tsvOut = new TSVOutputGenerator(new PrintWriter("%s-%s-%s.milne-witten.log".format(testSourceName,dName,EvalUtils.now())))
-    //val arffOut = new TrainingDataOutputGenerator()
-    //val outputs = List(tsvOut)
-    //val pw = new PrintWriter("%s-%s-%s.milne-witten.log".format(testSourceName,dName,EvalUtils.now()))
 
     //CSAW
     val csaw = CSAWCorpus.fromDirectory(new File("raw_data/csaw"))
@@ -264,14 +240,15 @@ object IndexEsa {
 
     //Make the occ filters
     val redirectTCFileName = if (args.size > 1) args(1) else "data/redirects_tc.tsv" //produced by ExtractCandidateMap
+    val conceptURIsFileName  = if (args.size>2) args(2) else "data/conceptURIs.list" //produced by ExtractCandidateMap
 
-    val occFilters = List(RedirectResolveFilter.fromFile(new File(redirectTCFileName)))
+    val occFilters = List(UriWhitelistFilter.fromFile(new File(conceptURIsFileName)),RedirectResolveFilter.fromFile(new File(redirectTCFileName)))
     val tsvOut = new TSVOutputGenerator(new PrintWriter("%s-%s-%s.milne-witten.log".format(testSourceName2, dName, EvalUtils.now())))
     val outputs = List(tsvOut)
 
 
     //(2) create the EvaluateParagraphDisambiguator
-    //EvaluateParagraphDisambiguator.evaluate(mw, disambiguator, pw)
-    EvaluateParagraphDisambiguator.evaluate(csaw, disambiguator, outputs, occFilters)
+    EvaluateParagraphDisambiguator.evaluate(mw, disambiguator, outputs, occFilters)
+    //EvaluateParagraphDisambiguator.evaluate(csaw, disambiguator, outputs, occFilters)
   }
 }

@@ -63,7 +63,7 @@ object EvaluateParagraphDisambiguator {
     rank
   }
                                                                                                                                    //TODO: change back to OccurrenceFilter
-  def evaluate(testSource: AnnotatedTextSource, disambiguator: ParagraphDisambiguator, outputs: List[OutputGenerator], occFilters: List[RedirectResolveFilter]) {
+  def evaluate(testSource: AnnotatedTextSource, disambiguator: ParagraphDisambiguator, outputs: List[OutputGenerator], occFilters: List[OccurrenceFilter]) {
     val startTime = System.nanoTime()
 
     var i = 0;
@@ -83,7 +83,7 @@ object EvaluateParagraphDisambiguator {
       var acc = 0.0
       try {
         val bestK = filter(disambiguator.bestK(paragraph, 100))
-        //TODO: testing for redirect resolution
+
         //TODO: add the other filters to discount disambiguations, nils, etc...
         val goldOccurrences = occFilters.foldLeft(a.occurrences.toTraversable){ (o,f) => f.filterOccs(o) }
 
@@ -94,7 +94,6 @@ object EvaluateParagraphDisambiguator {
                                                     bestK.getOrElse(Factory.SurfaceFormOccurrence.from(correctOccurrence), // predicted
                                                     List[DBpediaResourceOccurrence]()))
 
-        //TODO: add outputs instead of PrintWriter
         outputs.foreach(_.write(disambResult))
 
           val invRank = if (disambResult.rank>0) (1.0/disambResult.rank) else  0.0
@@ -135,46 +134,6 @@ object EvaluateParagraphDisambiguator {
     outputs.foreach(_.summary(disambigSummary))
 
     outputs.foreach(_.flush)
-
-
-      /*
-      a.occurrences
-        .filterNot(o => o.id.endsWith("DISAMBIG")) // discounting URIs from gold standard that we know are disambiguations
-        .foreach(correctOccurrence => {
-        nOccurrences = nOccurrences + 1
-        val rank = getRank(correctOccurrence, // correct
-          bestK.getOrElse(Factory.SurfaceFormOccurrence.from(correctOccurrence), // predicted
-            List[DBpediaResourceOccurrence]()))
-        val invRank = if (rank > 0) (1.0 / rank) else 0.0
-        if (rank == 0) {
-          nZeros = nZeros + 1
-        } else if (rank == 1) {
-          nCorrects = nCorrects + 1
-        }
-        acc = acc + invRank
-      });
-      val mrr = acc / a.occurrences.size
-      LOG.info("Mean Reciprocal Rank (MRR) = %.5f".format(mrr))
-      mrr
-    })
-    val endTime = System.nanoTime()
-    LOG.info("********************")
-    LOG.info("Disambiguator: %s".format(disambiguator.name))
-    LOG.info("Correct URI not found = %d / %d = %.3f".format(nZeros, nOccurrences, nZeros.toDouble / nOccurrences))
-    LOG.info("Accuracy = %d / %d = %.3f".format(nCorrects, nOccurrences, nCorrects.toDouble / nOccurrences))
-    LOG.info("Global MRR: %s".format(mrrResults.sum / mrrResults.size))
-    LOG.info("Elapsed time: %s sec".format((endTime - startTime) / 1000000000))
-    LOG.info("********************")
-
-    output.append("\n********************" +
-      "\nDisambiguator: %s".format(disambiguator.name) +
-      "\nCorrect URI not found = %d / %d = %.3f".format(nZeros, nOccurrences, nZeros.toDouble / nOccurrences) +
-      "\nAccuracy = %d / %d = %.3f".format(nCorrects, nOccurrences, nCorrects.toDouble / nOccurrences) +
-      "\nGlobal MRR: %s".format(mrrResults.sum / mrrResults.size) +
-      "\nElapsed time: %s sec".format((endTime - startTime) / 1000000000))
-
-    output.flush
-    */
   }
 
   def main(args: Array[String]) {
@@ -184,21 +143,8 @@ object EvaluateParagraphDisambiguator {
     //TODO: testing for redirect resolution
     val redirectTCFileName  = if (args.size>1) args(1) else "data/redirects_tc.tsv" //produced by ExtractCandidateMap
     val conceptURIsFileName  = if (args.size>2) args(2) else "data/conceptURIs.list" //produced by ExtractCandidateMap
-    //TODO: working here --> find the correct Occurrence filter and Aida Corpus classes
-    val noNils = new OccurrenceFilter {
-      def touchOcc(occ : DBpediaResourceOccurrence) : Option[DBpediaResourceOccurrence] = {
-        if (occ.id.endsWith("DISAMBIG") || //Max has marked ids with DISAMBIG in a TSV file for one of our datasets
-          //commented for testing...
-          /*occ.resource.uri.equals(AidaCorpus.nilUri) ||*/
-          occ.resource.uri.startsWith("http://knoesis")) {
-          None
-        } else {
-          Some(occ)
-        }
-      }
-    }
 
-    val occFilters = List(RedirectResolveFilter.fromFile(new File(redirectTCFileName)))
+    val occFilters = List(UriWhitelistFilter.fromFile(new File(conceptURIsFileName)), RedirectResolveFilter.fromFile(new File(redirectTCFileName)))
 
     val testFileName: String = args(1) //"e:\\dbpa\\data\\index\\dbpedia36data\\test\\test100k.tsv"
     val output = new PrintWriter(testFileName + ".pareval.log")

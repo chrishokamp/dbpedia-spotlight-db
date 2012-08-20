@@ -45,11 +45,11 @@ object StoreEvaluation {
 
     consumption += (Runtime.getRuntime.totalMemory - Runtime.getRuntime.freeMemory) / (1024 * 1024)
 
+
     val contextStore = MemoryStore.loadContextStore(new FileInputStream("data/context.mem"), tokenStore)
 
     consumption += (Runtime.getRuntime.totalMemory - Runtime.getRuntime.freeMemory) / (1024 * 1024)
     println("Memory consumption:", consumption)
-
 
     val disambiguator = new DBTwoStepDisambiguator(
       tokenStore,
@@ -60,6 +60,7 @@ object StoreEvaluation {
       new LuceneTokenizer(new SnowballAnalyzer(Version.LUCENE_36, "English")),
       new LinearRegressionMixture()
     )
+
     /*
     val disambiguator = new DBEsaDisambiguator(
       tokenStore,

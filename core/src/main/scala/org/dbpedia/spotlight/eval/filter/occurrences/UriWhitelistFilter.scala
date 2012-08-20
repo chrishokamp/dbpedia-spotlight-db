@@ -17,10 +17,10 @@
 package org.dbpedia.spotlight.eval.filter.occurrences
 
 import org.dbpedia.spotlight.model.DBpediaResourceOccurrence
+import org.dbpedia.spotlight.model.OccurrenceFilter
 import io.Source
 import org.apache.commons.logging.LogFactory
 import java.io.File
-import org.dbpedia.spotlight.eval.filter.occurrences.OccurrenceFilter
 
 /**
  * Class that takes a whitelist of URIs to allow for indexing.
