@@ -106,7 +106,7 @@ object IndexLsa {
            //all vectors actually have the same number of values
           val s = mahoutVec.size()
           //TODO: only for testing!!!!!!
-          for (i <- 0 to 7) {
+          for (i <- 0 to 12) {
             val weight = mahoutVec.get(i)
             esaMemoryIndexer.addResource(tokenId, (i, weight))
             //println ("added token: " + tokenStore.getTokenByID(tokenId) + " to the index...")

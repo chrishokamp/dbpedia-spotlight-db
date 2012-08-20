@@ -10,19 +10,19 @@
 #4 ssvd
 #5 transpose V (the term matrix)
 
+#we need an initial input dir and output dir
 input_dir=$1
 output_dir=$2
 dimensions=$3
 reducers=$4
 
-#we need an initial input dir and output dir
 #Working  - this has been replaced by MahoutVectorUtil
 #mahout seqdirectory --input $input_dir  --output $output_dir 
 
 #output file's name is the input to seq2sparse
-#mahout seq2sparse --input $input_dir --output $output_dir
+mahout seq2sparse --input $input_dir --output $output_dir
 
-#mahout rowid --input $output_dir/tfidf-vectors --output $output_dir
+mahout rowid --input $output_dir/tfidf-vectors --output $output_dir
 
 #this prepares V_t to become an inverted index of terms
 mahout ssvd --rank $dimensions --vHalfSigma --reduceTasks $reducers --input $output_dir/matrix --output $output_dir

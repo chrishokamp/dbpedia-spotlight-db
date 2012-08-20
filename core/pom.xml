@@ -181,6 +181,16 @@
             <artifactId>lucene-phonetic</artifactId>
             <version>3.6.0</version>
         </dependency>
+        <dependency>
+            <groupId>org.apache.mahout</groupId>
+            <artifactId>mahout-core</artifactId>
+            <version>0.7</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.mahout</groupId>
+            <artifactId>mahout-integration</artifactId>
+            <version>0.7</version>
+        </dependency>
 
         <dependency>
             <groupId>jcs</groupId>
