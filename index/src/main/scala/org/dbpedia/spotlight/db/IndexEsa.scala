@@ -95,7 +95,7 @@ object IndexEsa {
     }
     //sort every list in the Inverted index and retain only topN elements
     //TODO: testing here - make sure that the sort is correct
-    esaMemoryIndexer.invertedIndex.topN(15)
+    esaMemoryIndexer.invertedIndex.topN(7)
 
     /*
     //TODO: testing Kryo persistence of inverted index
@@ -196,7 +196,7 @@ object IndexEsa {
           }
         }
         //TESTING - threshold hard-coded for now
-        val topN = 65
+        val topN = 45
         val topList = docIndex.toList.sortBy(_._2).drop(docIndex.size - topN)
         val topMap = new HashMap[Int, Double]()
         topList.foreach {
@@ -241,14 +241,13 @@ object IndexEsa {
     //Make the occ filters
     val redirectTCFileName = if (args.size > 1) args(1) else "data/redirects_tc.tsv" //produced by ExtractCandidateMap
     val conceptURIsFileName  = if (args.size>2) args(2) else "data/conceptURIs.list" //produced by ExtractCandidateMap
-
     val occFilters = List(UriWhitelistFilter.fromFile(new File(conceptURIsFileName)),RedirectResolveFilter.fromFile(new File(redirectTCFileName)))
+
     val tsvOut = new TSVOutputGenerator(new PrintWriter("%s-%s-%s.milne-witten.log".format(testSourceName2, dName, EvalUtils.now())))
     val outputs = List(tsvOut)
 
-
     //(2) create the EvaluateParagraphDisambiguator
+    EvaluateParagraphDisambiguator.evaluate(csaw, disambiguator, outputs, occFilters)
     EvaluateParagraphDisambiguator.evaluate(mw, disambiguator, outputs, occFilters)
-    //EvaluateParagraphDisambiguator.evaluate(csaw, disambiguator, outputs, occFilters)
   }
 }
