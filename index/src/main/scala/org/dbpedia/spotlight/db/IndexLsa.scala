@@ -51,14 +51,14 @@ object IndexLsa {
     val field = "term"
     val analyzer = new EnglishAnalyzer(Version.LUCENE_36)
 
-    val tokenStore = MemoryStore.loadTokenStore(new FileInputStream("data/tokens.mem"))
-    val esaMemoryIndexer = new EsaStoreIndexer(new File("data/"))
+    val tokenStore = MemoryStore.loadTokenStore(new FileInputStream(baseDir+"data/tokens.mem"))
+    val esaMemoryIndexer = new EsaStoreIndexer(new File(baseDir+"data/"))
     esaMemoryIndexer.createInvertedIndexStore(tokenStore.size)
 
     //val matrixDir = new File("/home/chris/data/sequence-files/milne-V_t-10/V/")
     //val dictFile = new File("/home/chris/data/sequence-files/milne-V_t-10/dictionary.file-0")
-    val matrixDir = new File("/home/chris/data/sequence-files/milne-V_t/V/")
-    val dictFile = new File("/home/chris/data/sequence-files/milne-V_t/dictionary.file-0")
+    val matrixDir = new File(baseDir+"raw_data/LSA/milne-V_t-10/V/")
+    val dictFile = new File(baseDir+"raw_data/LSA/milne-V_t-10/dictionary.file-0")
 
   //def buildTermIndex (dictFile: File): mutable.HashMap[Int, Int] = {
     //indexes lsaId to tokenId
@@ -105,7 +105,7 @@ object IndexLsa {
            //all vectors actually have the same number of values
           val s = mahoutVec.size()
           //TODO: only for testing!!!!!!
-          for (i <- 0 to 80) {
+          for (i <- 0 to s-1) {
             val i = 0
             val weight = mahoutVec.get(i)
             esaMemoryIndexer.addResource(tokenId, (i, weight))
@@ -117,18 +117,18 @@ object IndexLsa {
   }
     //esaMemoryIndexer.invertedIndex.topN(50)
 
-    val resStore = MemoryStore.loadResourceStore(new FileInputStream("data/res.mem"))
+    val resStore = MemoryStore.loadResourceStore(new FileInputStream(baseDir+"data/res.mem"))
     //Create wikipedia to DBpedia closure
     val wikipediaToDBpediaClosure = new WikipediaToDBpediaClosure(
-      new FileInputStream(new File("raw_data/pig/redirects_en.nt")),
-      new FileInputStream(new File("raw_data/pig/disambiguations_en.nt"))
+      new FileInputStream(new File(baseDir+"raw_data/pig/redirects_en.nt")),
+      new FileInputStream(new File(baseDir+"raw_data/pig/disambiguations_en.nt"))
     )
     //Now create the ESA index
     LOG.info("now for the vector index...")
     val dataMap: Iterator[(DBpediaResource, Array[Token], Array[Double])] =
     //TokenOccurrenceSource.fromJsonFile(new File("raw_data/json/top150-50000docs.json"),
     //TokenOccurrenceSource.fromJsonFile(new File("raw_data/json/token_counts-20120601-top150.json"),
-      TokenOccurrenceSource.fromJsonFile(new File("raw_data/json/token_counts-top150-nofilter.json"),
+      TokenOccurrenceSource.fromJsonFile(new File(baseDir+"raw_data/json/token_counts-top150-nofilter.json"),
         tokenStore,
         wikipediaToDBpediaClosure,
         resStore
@@ -187,8 +187,8 @@ object IndexLsa {
       }
     }
 
-    val sfStore = MemoryStore.loadSurfaceFormStore(new FileInputStream("data/sf.mem"))
-    val cm = MemoryStore.loadCandidateMapStore(new FileInputStream("data/candmap.mem"), resStore)
+    val sfStore = MemoryStore.loadSurfaceFormStore(new FileInputStream(baseDir+"data/sf.mem"))
+    val cm = MemoryStore.loadCandidateMapStore(new FileInputStream(baseDir+"data/candmap.mem"), resStore)
 
     //Now test DBEsaDisambiguator
     println("About to create the disambiguator...")
@@ -205,23 +205,23 @@ object IndexLsa {
     )
 
     //Milne-Witten
-    val mw = MilneWittenCorpus.fromDirectory(new File("raw_data/MilneWitten-wikifiedStories"))
+    val mw = MilneWittenCorpus.fromDirectory(new File(baseDir+"raw_data/MilneWitten-wikifiedStories"))
     val testSourceName = mw.name
     //val pw = new PrintWriter("%s-%s-%s.milne-witten.log".format(testSourceName,dName,EvalUtils.now()))
 
     val dName = disambiguator.name.replaceAll( """[.*[?/<>|*:\"{\\}].*]""", "_")
 
     //CSAW
-    val csaw = CSAWCorpus.fromDirectory(new File("raw_data/csaw"))
+    val csaw = CSAWCorpus.fromDirectory(new File(baseDir+"raw_data/csaw"))
     val testSourceName2 = csaw.name
     //val cs = new PrintWriter("%s-%s-%s.csaw.log".format(testSourceName2,dName,EvalUtils.now()))
 
     //Make the occ filters
-    val redirectTCFileName = if (args.size > 1) args(1) else "data/redirects_tc.tsv" //produced by ExtractCandidateMap
-    val conceptURIsFileName  = if (args.size>2) args(2) else "data/conceptURIs.list" //produced by ExtractCandidateMap
+    val redirectTCFileName = if (args.size > 1) args(1) else baseDir+"data/redirects_tc.tsv" //produced by ExtractCandidateMap
+    val conceptURIsFileName  = if (args.size>2) args(2) else baseDir+"data/conceptURIs.list" //produced by ExtractCandidateMap
     val occFilters = List(UriWhitelistFilter.fromFile(new File(conceptURIsFileName)),RedirectResolveFilter.fromFile(new File(redirectTCFileName)))
 
-    val tsvOut = new TSVOutputGenerator(new PrintWriter("%s-%s-%s.milne-witten.log".format(testSourceName2, dName, EvalUtils.now())))
+    val tsvOut = new TSVOutputGenerator(new PrintWriter("%s-%s-%s.disambiguator.log".format(testSourceName2, dName, EvalUtils.now())))
     val outputs = List(tsvOut)
 
     //(2) create the EvaluateParagraphDisambiguator

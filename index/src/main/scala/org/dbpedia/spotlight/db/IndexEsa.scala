@@ -116,7 +116,7 @@ object IndexEsa {
       }
     }
     //sort every list in the Inverted index and retain only topN elements
-    esaMemoryIndexer.invertedIndex.topN(25)
+    esaMemoryIndexer.invertedIndex.topN(15)
 
     /*
     //TODO: testing Kryo persistence of inverted index
@@ -215,7 +215,7 @@ object IndexEsa {
           }
         }
         //TESTING - threshold hard-coded for now - should normalization also be implemented here?
-        val topN = 75
+        val topN = 60
         val topList = docIndex.toList.sortBy(_._2).drop(docIndex.size - topN)
         val topMap = new HashMap[Int, Double]()
         topList.foreach {
@@ -294,11 +294,11 @@ object IndexEsa {
     val conceptURIsFileName  = if (args.size>2) args(2) else baseDir+"data/conceptURIs.list" //produced by ExtractCandidateMap
     val occFilters = List(UriWhitelistFilter.fromFile(new File(conceptURIsFileName)),RedirectResolveFilter.fromFile(new File(redirectTCFileName)))
 
-    val tsvOut = new TSVOutputGenerator(new PrintWriter("%s-%s-%s.milne-witten.log".format(testSourceName, dName, EvalUtils.now())))
+    val tsvOut = new TSVOutputGenerator(new PrintWriter("%s-%s-%s.disambiguator.log".format(testSourceName, dName, EvalUtils.now())))
     val outputs = List(tsvOut)
 
     //(2) create the EvaluateParagraphDisambiguator
-    //EvaluateParagraphDisambiguator.evaluate(csaw, disambiguator, outputs, occFilters)
+    EvaluateParagraphDisambiguator.evaluate(csaw, disambiguator, outputs, occFilters)
     EvaluateParagraphDisambiguator.evaluate(mw, disambiguator, outputs, occFilters)
 
   }
