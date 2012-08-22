@@ -9,6 +9,7 @@ import scala.collection.JavaConversions._
 import collection.mutable.HashMap
 import collection.mutable
 
+
 /**
  * @author Chris Hokamp
  */
@@ -20,9 +21,10 @@ class MemoryEsaVectorStore
 
   //the tfidf weight for this term in each resource that it occurs in
   //var weights: Array[Array[Double]]
-  //TODO: change to Map[Int, Map[Int, Double]]
+
   //    - Map[resId, Map[tokenId, Sum(Double)]
   var resources = new  mutable.HashMap[Int, mutable.Map[Int, Double]]
+  var resourceIndex: ResourceStore = null
 
   def size = resources.size
 
@@ -38,9 +40,27 @@ class MemoryEsaVectorStore
     resourceWeights
   }
 
+
+
   def addVector (resource: DBpediaResource, resourceWeights: mutable.Map[Int, Double]) {
     val id = resource.id
     resources.put(id, resourceWeights)
+  }
+
+  def getTopDocs (resource: DBpediaResource): List[String] = {
+    val resourceWeights = resources.getOrElse(resource.id, null)
+    var topDocs = List[String]()
+    if (resourceWeights != null) {
+      val topIds = resourceWeights.toList.sortBy(_._2)
+      topIds.foreach {
+        case (i: Int, w: Double) => {
+          //TEST
+          //println ("res = " + resourceIndex.getResource(i).uri + " Weight: " + w )
+          topDocs ::= resourceIndex.getResource(i).uri
+        }
+      }
+    }
+    topDocs
   }
 
 

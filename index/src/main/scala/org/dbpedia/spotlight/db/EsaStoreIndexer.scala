@@ -54,15 +54,12 @@ class EsaStoreIndexer(override val baseDir: File)
     }
   }
 
-
-  //TODO: working to convert the index to Array representation of the Map
   //adds the resource set and the doc frequency
   def addResourceSet (tokenId: Int, docs: mutable.HashMap[Int, Double]) {
     //TODO: this methods is currently in the wrong place
     invertedIndex.addAll(tokenId, docs)
   }
 
-  //TODO: REIMPLEMENT map in inverted index - the list isn't doing anything!!
   def addAllTokens (allTokens: Map[Int, Map[Int, Double]]) {
   //return indexed arrays (mimics a map) for each token in index
   //this will make the index persistable
@@ -75,7 +72,7 @@ class EsaStoreIndexer(override val baseDir: File)
 
   }
 
-  //TODO: TEST ASAP
+  //TODO: TEST ASAP - update: serializes, but throws GC error when reading
 
   def writeInvertedIndex () {
     invertedIndex.docsToNestedArrays

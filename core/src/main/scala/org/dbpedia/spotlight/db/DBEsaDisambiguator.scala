@@ -46,17 +46,21 @@ class DBEsaDisambiguator (
              queryEsaVector.put(i, (queryEsaVector.getOrElse(i, 0.0)) + (weight*tfidf))
            }
           }
-          val topN = 125
-          val topList = queryEsaVector.toList.sortBy(_._2).drop(queryEsaVector.size - topN)
-          val topMap = new HashMap[Int, Double]()
-          topList.foreach {
-            case (docId: Int, weight: Double) => {
-              topMap.put(docId, weight)
-            }
-          }
+
         }
       }
     }
+    /*
+    //The number of dimensions to keep
+    val topN = 125
+    val topList = queryEsaVector.toList.sortBy(_._2).drop(queryEsaVector.size - topN)
+    val topMap = new HashMap[Int, Double]()
+    topList.foreach {
+      case (docId: Int, weight: Double) => {
+        topMap.put(docId, weight)
+      }
+    }
+    */
 
     val contextVectors = candidates.map{ candRes: DBpediaResource =>
       (candRes -> esaVectorStore.getDocVector(candRes))

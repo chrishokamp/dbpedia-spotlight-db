@@ -4,13 +4,12 @@ import collection.mutable
 
 /**
  * @author Chris Hokamp
- *         - indexes a token using its tfidf values from the docs in which it occurs (uses TokenOccurenceIndexer as model)
- *         - note that this is implicitly an inverted index of the corpus as well
+ *         - indexes resources and stores a vector of weights
  */
 
 trait DocOccurrenceIndexer {
 
-  def addDocOccurrence(resource: DBpediaResource, token: Token, weight: Double)
+  //def addDocOccurrence(resource: DBpediaResource, token: Token, weight: Double)
 
   def addDocOccurrence(resource: DBpediaResource, resourceWeights: mutable.Map[Int, Double])
 

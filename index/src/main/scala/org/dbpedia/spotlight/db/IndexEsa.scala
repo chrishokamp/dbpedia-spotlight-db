@@ -48,8 +48,7 @@ object IndexEsa {
     )
 
     /*
-    //Working - index token occurrences - TODO: Load and TEST tficf
-    //Update: ran out of memory with filter2 - trying with filter5 docs/tokens
+    Index token occurrences
     esaMemoryIndexer.createContextStore(resStore.size)
     esaMemoryIndexer.addTokenOccurrences(
       TokenOccurrenceSource.fromPigStorageFile(
@@ -62,11 +61,11 @@ object IndexEsa {
     esaMemoryIndexer.writeTokenOccurrences()
     */
 
-    /*
+
     //Note: there were problems with garbage collection - put back to Iterator for now
     val resourceMap: Iterator[(DBpediaResource, Array[Token], Array[Double])] =
-      TokenOccurrenceSource.fromJsonFile(new File("raw_data/json/top150-50000docs.json"),
-      //TokenOccurrenceSource.fromJsonFile(new File("raw_data/json/top150-filter5.json"),
+      //TokenOccurrenceSource.fromJsonFile(new File("raw_data/json/top150-50000docs.json"),
+      TokenOccurrenceSource.fromJsonFile(new File("raw_data/json/top150-filter5.json"),
       //TokenOccurrenceSource.fromJsonFile(new File("raw_data/json/token_counts-20120601-top150.json"),
         tokenStore,
         wikipediaToDBpediaClosure,
@@ -77,8 +76,10 @@ object IndexEsa {
       t: Triple[DBpediaResource, Array[Token], Array[Double]] => {
         val Triple(res, tokens, weights) = t
         val resId = res.id
-        var i = 0
+        //the tokens are sorted by weight descending
+        val topWeight = weights(0)
 
+        var i = 0
         tokens.foreach {
           (t: Token) => {
             val tokenId = t.id
@@ -86,14 +87,16 @@ object IndexEsa {
             //val index = new HashMap[Int, Double]
 
             //TODO: fix hard-coded tf-idf threshold below (changed to test indexing efficiency)
-            if (weights(i) > 5){
+            if (weights(i) > 1){
               //val index = esaMemoryIndexer.invertedIndex.index.getOrElse(tokenId, new HashMap[Int,Double]())
               //index.put(resId, weights(i))
               //esaMemoryIndexer.addResourceSet(tokenId, index)
 
 
               //println("resId is " + resId + " weights(i) is " + weights(i))
-              val doc = (resId, weights(i))
+
+              //normalize by the top weight for this doc
+              val doc = (resId, (weights(i)/topWeight))
               esaMemoryIndexer.addResource(tokenId, doc)
               /*
                 var index = new mutable.HashMap[Int, Double]()
@@ -111,7 +114,6 @@ object IndexEsa {
       }
     }
     //sort every list in the Inverted index and retain only topN elements
-    //TODO: testing here - make sure that the sort is correct
     esaMemoryIndexer.invertedIndex.topN(25)
 
     /*
@@ -153,10 +155,11 @@ object IndexEsa {
       - (3) iterate over the resource map (iteration code copied from above)
     */
     LOG.info("now for the vector index...")
+    esaMemoryIndexer.vectorStore.resourceIndex = resStore
     val dataMap: Iterator[(DBpediaResource, Array[Token], Array[Double])] =
-      TokenOccurrenceSource.fromJsonFile(new File("raw_data/json/top150-50000docs.json"),
+      //TokenOccurrenceSource.fromJsonFile(new File("raw_data/json/top150-50000docs.json"),
       //TokenOccurrenceSource.fromJsonFile(new File("raw_data/json/token_counts-20120601-top150.json"),
-        //TokenOccurrenceSource.fromJsonFile(new File("raw_data/json/top150-filter5.json"),
+        TokenOccurrenceSource.fromJsonFile(new File("raw_data/json/top150-filter5.json"),
         tokenStore,
         wikipediaToDBpediaClosure,
         resStore
@@ -178,19 +181,16 @@ object IndexEsa {
           (tok: Token) => {
             val tokenWeight = weights(i)
 
-            //TODO: get the vector from the disk-backed inverted index
-            //TODO: handle nulls properly
-
             //TODO: Decide whether to use in-memory or disk-backed inverted indexes
 
-            //TESTING MEMORY BACKED - this is throwing a garbage collection error when read from disk
+            //TESTING MEMORY BACKED - this is throwing a garbage collection error when loaded from disk
             val tokensDocVector = esaMemoryIndexer.invertedIndex.getResources(tok)
 
             //TESTING DISK BACKED...
             //val tokensDocVector = testInvertedIndex.getResources(tok)
 
             if (tokensDocVector != null) {
-              val s = tokensDocVector.size
+              //val s = tokensDocVector.size
               //println("The token vector for " + tok.name +" contains " + s + " docs" )
               tokensDocVector.foreach {
                 case (docId: Int, weight: Double) => {
@@ -212,8 +212,8 @@ object IndexEsa {
             docIndex.put(docId, avgWeight)
           }
         }
-        //TESTING - threshold hard-coded for now
-        val topN = 75
+        //TESTING - threshold hard-coded for now - should normalization also be implemented here?
+        val topN = 100
         val topList = docIndex.toList.sortBy(_._2).drop(docIndex.size - topN)
         val topMap = new HashMap[Int, Double]()
         topList.foreach {
@@ -223,13 +223,29 @@ object IndexEsa {
         }
 
         esaMemoryIndexer.addDocOccurrence(res, topMap)
+        //Testing top docs...
+        if (docCount % 25000 == 0) {
+          println ("For Resource: " + res.toString)
+          println ("top docs are:")
+          var index =1
+          esaMemoryIndexer.vectorStore.getTopDocs(res).foreach {
+            case (s: String) => {
+              println("%s: %s".format(index,s))
+              index += 1
+            }
+
+          }
+        }
       }
     }
-    */
+
+
+
+
     val sfStore = MemoryStore.loadSurfaceFormStore(new FileInputStream("data/sf.mem"))
     val cm = MemoryStore.loadCandidateMapStore(new FileInputStream("data/candmap.mem"), resStore)
-    val contextStore = MemoryStore.loadContextStore(new FileInputStream("data/context.mem"), tokenStore)
-    /*
+
+
     //Now test DBEsaDisambiguator
     println("About to create the disambiguator...")
     val disambiguator = new DBEsaDisambiguator(
@@ -243,7 +259,10 @@ object IndexEsa {
       //new LinearRegressionMixture()
       new OnlySimScoreMixture()
     )
-    */
+
+    /*
+    //Test DBTwoStepDisambiguator
+    val contextStore = MemoryStore.loadContextStore(new FileInputStream("data/context.mem"), tokenStore)
     val disambiguator = new DBTwoStepDisambiguator(
       tokenStore,
       sfStore,
@@ -254,6 +273,7 @@ object IndexEsa {
       //new LinearRegressionMixture()
       new OnlySimScoreMixture()
     )
+    */
 
     //Milne-Witten
     val mw = MilneWittenCorpus.fromDirectory(new File("raw_data/MilneWitten-wikifiedStories"))
