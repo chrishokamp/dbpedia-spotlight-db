@@ -175,13 +175,14 @@ object IndexEsa {
           LOG.info("Made ESA vectors for %d resources".format(docCount))
         }
 
+        val topDoc = weights(0)
         var docIndex = new HashMap[Int, Double]()
         var i = 0
 
         //get the vector of docs from the inverted index
         tokens.foreach {
           (tok: Token) => {
-            val tokenWeight = weights(i)
+            val tokenWeight = weights(i)/topDoc
 
             //TODO: Decide whether to use in-memory or disk-backed inverted indexes
 
