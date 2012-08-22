@@ -157,6 +157,33 @@ object TokenOccurrenceSource {
     }
   }
 
+
+  def fromPigStorageInputStream(tokenInputStream: InputStream, tokenStore: TokenStore, wikipediaToDBpediaClosure: WikipediaToDBpediaClosure, resStore: ResourceStore): Iterator[Triple[DBpediaResource, Array[Token], Array[Int]]] = {
+
+    var i = 0
+    pigStorageOccurrenceSource(tokenInputStream) map {
+      case (wikiurl: String, tokens: Array[String], counts: Array[Int]) => {
+        i += 1
+        if (i % 10000 == 0)
+          LOG.info("Read context for %d resources...".format(i))
+        try {
+          Triple(
+            resStore.getResourceByName(wikipediaToDBpediaClosure.wikipediaToDBpediaURI(wikiurl)),
+            tokens.map{ token => tokenStore.getToken(token) },
+            counts
+          )
+        } catch {
+          case e: DBpediaResourceNotFoundException => Triple(null, null, null)
+          case e: NotADBpediaResourceException     => Triple(null, null, null)
+        }
+      }
+    }
+
+  }
+
+
+
+  def fromPigStorageFile(tokenFile: File, tokenStore: TokenStore, wikipediaToDBpediaClosure: WikipediaToDBpediaClosure, resStore: ResourceStore) = fromPigStorageInputStream(new FileInputStream(tokenFile), tokenStore, wikipediaToDBpediaClosure, resStore)
   //Chris: temporarily changed to parse PigStorage output correctly - this is totally hackish at this point
   def pigStorageOccurrenceSource(tokenInputStream: InputStream): Iterator[Triple[String, Array[String], Array[Int]]] = {
     Source.fromInputStream(tokenInputStream) getLines() filter(x => !x.equals("") && !x.contains("{}") && !x.contains("2,3,7,4")) map {

@@ -9,6 +9,7 @@ import org.dbpedia.spotlight.model._
 import collection.mutable
 import scala.math
 import org.dbpedia.spotlight.exceptions.{InputException, SurfaceFormNotFoundException}
+import collection.mutable.HashMap
 
 /**
  * @author Chris Hokamp
@@ -44,6 +45,14 @@ class DBEsaDisambiguator (
             case (i: Int, weight: Double) => {
              queryEsaVector.put(i, (queryEsaVector.getOrElse(i, 0.0)) + (weight*tfidf))
            }
+          }
+          val topN = 125
+          val topList = queryEsaVector.toList.sortBy(_._2).drop(queryEsaVector.size - topN)
+          val topMap = new HashMap[Int, Double]()
+          topList.foreach {
+            case (docId: Int, weight: Double) => {
+              topMap.put(docId, weight)
+            }
           }
         }
       }
@@ -114,7 +123,7 @@ class DBEsaDisambiguator (
           contextScores.getOrElse(cand.resource, 0.0)
         )
         resOcc.setSimilarityScore(
-          (1234.3989 * cand.prior) +
+          /*(1234.3989 * cand.prior) +*/
             0.9968 * resOcc.contextualScore +
             -0.0275
         )

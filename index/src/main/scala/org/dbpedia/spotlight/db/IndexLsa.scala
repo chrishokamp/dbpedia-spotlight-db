@@ -47,8 +47,6 @@ object IndexLsa {
     val conf = new Configuration
     val fs = FileSystem.get(conf)
 
-    val rank = 150
-
     val field = "term"
     val analyzer = new EnglishAnalyzer(Version.LUCENE_36)
 
@@ -56,10 +54,10 @@ object IndexLsa {
     val esaMemoryIndexer = new EsaStoreIndexer(new File("data/"))
     esaMemoryIndexer.createInvertedIndexStore(tokenStore.size)
 
+    //val matrixDir = new File("/home/chris/data/sequence-files/milne-V_t-10/V/")
+    //val dictFile = new File("/home/chris/data/sequence-files/milne-V_t-10/dictionary.file-0")
     val matrixDir = new File("/home/chris/data/sequence-files/milne-V_t/V/")
-    //key is token, val is lsaId
     val dictFile = new File("/home/chris/data/sequence-files/milne-V_t/dictionary.file-0")
-
 
   //def buildTermIndex (dictFile: File): mutable.HashMap[Int, Int] = {
     //indexes lsaId to tokenId
@@ -106,7 +104,8 @@ object IndexLsa {
            //all vectors actually have the same number of values
           val s = mahoutVec.size()
           //TODO: only for testing!!!!!!
-          for (i <- 0 to 12) {
+          for (i <- 0 to 80) {
+            val i = 0
             val weight = mahoutVec.get(i)
             esaMemoryIndexer.addResource(tokenId, (i, weight))
             //println ("added token: " + tokenStore.getTokenByID(tokenId) + " to the index...")
@@ -166,7 +165,7 @@ object IndexLsa {
             i += 1
           }
         }
-        //now get the centroid - Update: looks as if we need to sort and keep only top N values, otherwise mem reqs are too high
+        //now get the centroid - Update: looks as if we need to sort and keep only top N values, otherwise mem requirements are too high
         val noTokens = tokens.size
         docIndex.foreach {
           case (docId: Int, weight: Double) => {
@@ -174,7 +173,7 @@ object IndexLsa {
             docIndex.put(docId, avgWeight)
           }
         }
-        //TESTING - threshold hard-coded for now
+        //TODO: TESTING - threshold hard-coded for now
         val topN = 150
         val topList = docIndex.toList.sortBy(_._2).drop(docIndex.size - topN)
         val topMap = new HashMap[Int, Double]()

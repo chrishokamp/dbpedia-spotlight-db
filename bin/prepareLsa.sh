@@ -43,4 +43,6 @@ mahout ssvd --rank $dimensions --vHalfSigma --reduceTasks $reducers --input $out
 
 # the temp file may be left over
 rm -r temp
-
+#remove the hidden checksum files
+rm -rf $output_dir/.part*
+rm -rf $output_dir/._SUCCESS.crc

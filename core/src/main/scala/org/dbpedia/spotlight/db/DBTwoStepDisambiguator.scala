@@ -5,7 +5,7 @@ import org.dbpedia.spotlight.model._
 import org.dbpedia.spotlight.disambiguate.mixtures.Mixture
 import org.apache.commons.logging.LogFactory
 import scala.collection.JavaConverters._
-import similarity.TFICFSimilarity
+import similarity.{RandomSimilarity, TFICFSimilarity}
 import org.dbpedia.spotlight.disambiguate.{ParagraphDisambiguator, Disambiguator}
 import scala.Predef._
 import org.dbpedia.spotlight.exceptions.{SurfaceFormNotFoundException, InputException}
@@ -21,19 +21,15 @@ class DBTwoStepDisambiguator(
   surfaceFormStore: SurfaceFormStore,
   resourceStore: ResourceStore,
   candidateMap: CandidateMapStore,
-  //Chris: testing...
-  //invertedIndex: InvertedIndexStore,
-  //esaVectorStore: EsaVectorStore,
   contextStore: ContextStore,
-  //Chris: END TESTING
   tokenizer: Tokenizer,
   mixture: Mixture
 ) extends ParagraphDisambiguator {
 
   private val LOG = LogFactory.getLog(this.getClass)
 
-  val similarity = new TFICFSimilarity()
-
+  //val similarity = new TFICFSimilarity()
+  val similarity = new RandomSimilarity()
 
   def getScores(text: Text, candidates: Set[DBpediaResource]): mutable.Map[DBpediaResource, Double] = {
 
@@ -46,7 +42,7 @@ class DBTwoStepDisambiguator(
 
     similarity.score(query, contextCounts)
   }
-
+  //TODO: original value was 500
   val MAX_CANDIDATES = 500
   def bestK(paragraph: Paragraph, k: Int): Map[SurfaceFormOccurrence, List[DBpediaResourceOccurrence]] = {
 
@@ -102,10 +98,11 @@ class DBTwoStepDisambiguator(
             0.0,
             contextScores.getOrElse(cand.resource, 0.0)
           )
+          //Chris: testing here - eliminate priors
           resOcc.setSimilarityScore(
-            (1234.3989 * cand.prior) +
-               0.9968 * resOcc.contextualScore +
-                 -0.0275
+            /*(1234.3989 * cand.prior) +
+               0.9968 * */resOcc.contextualScore /*+
+                 -0.0275 */
           )
           resOcc
         }

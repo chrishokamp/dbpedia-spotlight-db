@@ -47,9 +47,26 @@ object IndexEsa {
       new FileInputStream(new File("raw_data/pig/disambiguations_en.nt"))
     )
 
+    /*
+    //Working - index token occurrences - TODO: Load and TEST tficf
+    //Update: ran out of memory with filter2 - trying with filter5 docs/tokens
+    esaMemoryIndexer.createContextStore(resStore.size)
+    esaMemoryIndexer.addTokenOccurrences(
+      TokenOccurrenceSource.fromPigStorageFile(
+        new File("raw_data/pig/pigStorage-filter5.TSV"),
+        tokenStore,
+        wikipediaToDBpediaClosure,
+        resStore
+      )
+    )
+    esaMemoryIndexer.writeTokenOccurrences()
+    */
+
+    /*
     //Note: there were problems with garbage collection - put back to Iterator for now
     val resourceMap: Iterator[(DBpediaResource, Array[Token], Array[Double])] =
-    TokenOccurrenceSource.fromJsonFile(new File("raw_data/json/token_counts-top150-nofilter.json"),
+      TokenOccurrenceSource.fromJsonFile(new File("raw_data/json/top150-50000docs.json"),
+      //TokenOccurrenceSource.fromJsonFile(new File("raw_data/json/top150-filter5.json"),
       //TokenOccurrenceSource.fromJsonFile(new File("raw_data/json/token_counts-20120601-top150.json"),
         tokenStore,
         wikipediaToDBpediaClosure,
@@ -95,7 +112,7 @@ object IndexEsa {
     }
     //sort every list in the Inverted index and retain only topN elements
     //TODO: testing here - make sure that the sort is correct
-    esaMemoryIndexer.invertedIndex.topN(7)
+    esaMemoryIndexer.invertedIndex.topN(25)
 
     /*
     //TODO: testing Kryo persistence of inverted index
@@ -137,9 +154,9 @@ object IndexEsa {
     */
     LOG.info("now for the vector index...")
     val dataMap: Iterator[(DBpediaResource, Array[Token], Array[Double])] =
-      //TokenOccurrenceSource.fromJsonFile(new File("raw_data/json/top150-50000docs.json"),
+      TokenOccurrenceSource.fromJsonFile(new File("raw_data/json/top150-50000docs.json"),
       //TokenOccurrenceSource.fromJsonFile(new File("raw_data/json/token_counts-20120601-top150.json"),
-        TokenOccurrenceSource.fromJsonFile(new File("raw_data/json/token_counts-top150-nofilter.json"),
+        //TokenOccurrenceSource.fromJsonFile(new File("raw_data/json/top150-filter5.json"),
         tokenStore,
         wikipediaToDBpediaClosure,
         resStore
@@ -196,7 +213,7 @@ object IndexEsa {
           }
         }
         //TESTING - threshold hard-coded for now
-        val topN = 45
+        val topN = 75
         val topList = docIndex.toList.sortBy(_._2).drop(docIndex.size - topN)
         val topMap = new HashMap[Int, Double]()
         topList.foreach {
@@ -208,10 +225,11 @@ object IndexEsa {
         esaMemoryIndexer.addDocOccurrence(res, topMap)
       }
     }
-
+    */
     val sfStore = MemoryStore.loadSurfaceFormStore(new FileInputStream("data/sf.mem"))
     val cm = MemoryStore.loadCandidateMapStore(new FileInputStream("data/candmap.mem"), resStore)
-
+    val contextStore = MemoryStore.loadContextStore(new FileInputStream("data/context.mem"), tokenStore)
+    /*
     //Now test DBEsaDisambiguator
     println("About to create the disambiguator...")
     val disambiguator = new DBEsaDisambiguator(
@@ -221,6 +239,17 @@ object IndexEsa {
       cm,
       esaMemoryIndexer.invertedIndex,
       esaMemoryIndexer.vectorStore,
+      new LuceneTokenizer(new EnglishAnalyzer(Version.LUCENE_36)),
+      //new LinearRegressionMixture()
+      new OnlySimScoreMixture()
+    )
+    */
+    val disambiguator = new DBTwoStepDisambiguator(
+      tokenStore,
+      sfStore,
+      resStore,
+      cm,
+      contextStore,
       new LuceneTokenizer(new EnglishAnalyzer(Version.LUCENE_36)),
       //new LinearRegressionMixture()
       new OnlySimScoreMixture()
@@ -235,7 +264,7 @@ object IndexEsa {
 
     //CSAW
     val csaw = CSAWCorpus.fromDirectory(new File("raw_data/csaw"))
-    val testSourceName2 = csaw.name
+    //val testSourceName2 = csaw.name
     //val cs = new PrintWriter("%s-%s-%s.csaw.log".format(testSourceName2,dName,EvalUtils.now()))
 
     //Make the occ filters
@@ -243,11 +272,13 @@ object IndexEsa {
     val conceptURIsFileName  = if (args.size>2) args(2) else "data/conceptURIs.list" //produced by ExtractCandidateMap
     val occFilters = List(UriWhitelistFilter.fromFile(new File(conceptURIsFileName)),RedirectResolveFilter.fromFile(new File(redirectTCFileName)))
 
-    val tsvOut = new TSVOutputGenerator(new PrintWriter("%s-%s-%s.milne-witten.log".format(testSourceName2, dName, EvalUtils.now())))
+    val tsvOut = new TSVOutputGenerator(new PrintWriter("%s-%s-%s.milne-witten.log".format(testSourceName, dName, EvalUtils.now())))
     val outputs = List(tsvOut)
 
     //(2) create the EvaluateParagraphDisambiguator
-    EvaluateParagraphDisambiguator.evaluate(csaw, disambiguator, outputs, occFilters)
+    //EvaluateParagraphDisambiguator.evaluate(csaw, disambiguator, outputs, occFilters)
     EvaluateParagraphDisambiguator.evaluate(mw, disambiguator, outputs, occFilters)
+
   }
+
 }
