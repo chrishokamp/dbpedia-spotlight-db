@@ -52,7 +52,7 @@ class DBEsaDisambiguator (
     }
     /*
     //The number of dimensions to keep
-    val topN = 125
+    val topN = 500
     val topList = queryEsaVector.toList.sortBy(_._2).drop(queryEsaVector.size - topN)
     val topMap = new HashMap[Int, Double]()
     topList.foreach {
@@ -69,6 +69,7 @@ class DBEsaDisambiguator (
     val mutableVecs = collection.mutable.Map(contextVectors.toSeq: _*)
 
     similarity.score(queryEsaVector, mutableVecs)
+    //similarity.score(topMap, mutableVecs)
   }
 
   //Copied from DBTwoStepDisambiguator

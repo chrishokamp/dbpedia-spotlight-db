@@ -32,19 +32,21 @@ object IndexEsa {
 
   def main(args: Array[String]) {
 
-    val resStore = MemoryStore.loadResourceStore(new FileInputStream("data/res.mem"))
-    val tokenStore = MemoryStore.loadTokenStore(new FileInputStream("data/tokens.mem"))
+    val baseDir = args(0)
+
+    val resStore = MemoryStore.loadResourceStore(new FileInputStream(baseDir+"data/res.mem"))
+    val tokenStore = MemoryStore.loadTokenStore(new FileInputStream(baseDir+"data/tokens.mem"))
 
     //val invertedIndex: MemoryInvertedIndexStore = MemoryStore.loadInvertedIndexStore(new FileInputStream("data/invertedIndex.mem"))
 
-    val esaMemoryIndexer = new EsaStoreIndexer(new File("data/"))
+    val esaMemoryIndexer = new EsaStoreIndexer(new File(baseDir+"data/"))
     esaMemoryIndexer.createInvertedIndexStore(tokenStore.size)
     LOG.info("the size of token store is %d".format(tokenStore.size))
 
     //Create wikipedia to DBpedia closure
     val wikipediaToDBpediaClosure = new WikipediaToDBpediaClosure(
-      new FileInputStream(new File("raw_data/pig/redirects_en.nt")),
-      new FileInputStream(new File("raw_data/pig/disambiguations_en.nt"))
+      new FileInputStream(new File(baseDir+"raw_data/pig/redirects_en.nt")),
+      new FileInputStream(new File(baseDir+"raw_data/pig/disambiguations_en.nt"))
     )
 
     /*
@@ -65,7 +67,7 @@ object IndexEsa {
     //Note: there were problems with garbage collection - put back to Iterator for now
     val resourceMap: Iterator[(DBpediaResource, Array[Token], Array[Double])] =
       //TokenOccurrenceSource.fromJsonFile(new File("raw_data/json/top150-50000docs.json"),
-      TokenOccurrenceSource.fromJsonFile(new File("raw_data/json/top150-filter5.json"),
+      TokenOccurrenceSource.fromJsonFile(new File(baseDir+"raw_data/json/top150-filter5.json"),
       //TokenOccurrenceSource.fromJsonFile(new File("raw_data/json/token_counts-20120601-top150.json"),
         tokenStore,
         wikipediaToDBpediaClosure,
@@ -159,7 +161,7 @@ object IndexEsa {
     val dataMap: Iterator[(DBpediaResource, Array[Token], Array[Double])] =
       //TokenOccurrenceSource.fromJsonFile(new File("raw_data/json/top150-50000docs.json"),
       //TokenOccurrenceSource.fromJsonFile(new File("raw_data/json/token_counts-20120601-top150.json"),
-        TokenOccurrenceSource.fromJsonFile(new File("raw_data/json/top150-filter5.json"),
+        TokenOccurrenceSource.fromJsonFile(new File(baseDir+"raw_data/json/top150-filter5.json"),
         tokenStore,
         wikipediaToDBpediaClosure,
         resStore
@@ -213,7 +215,7 @@ object IndexEsa {
           }
         }
         //TESTING - threshold hard-coded for now - should normalization also be implemented here?
-        val topN = 100
+        val topN = 75
         val topList = docIndex.toList.sortBy(_._2).drop(docIndex.size - topN)
         val topMap = new HashMap[Int, Double]()
         topList.foreach {
@@ -242,8 +244,8 @@ object IndexEsa {
 
 
 
-    val sfStore = MemoryStore.loadSurfaceFormStore(new FileInputStream("data/sf.mem"))
-    val cm = MemoryStore.loadCandidateMapStore(new FileInputStream("data/candmap.mem"), resStore)
+    val sfStore = MemoryStore.loadSurfaceFormStore(new FileInputStream(baseDir+"data/sf.mem"))
+    val cm = MemoryStore.loadCandidateMapStore(new FileInputStream(baseDir+"data/candmap.mem"), resStore)
 
 
     //Now test DBEsaDisambiguator
@@ -276,20 +278,20 @@ object IndexEsa {
     */
 
     //Milne-Witten
-    val mw = MilneWittenCorpus.fromDirectory(new File("raw_data/MilneWitten-wikifiedStories"))
+    val mw = MilneWittenCorpus.fromDirectory(new File(baseDir+"raw_data/MilneWitten-wikifiedStories"))
     val testSourceName = mw.name
     //val pw = new PrintWriter("%s-%s-%s.milne-witten.log".format(testSourceName,dName,EvalUtils.now()))
 
     val dName = disambiguator.name.replaceAll( """[.*[?/<>|*:\"{\\}].*]""", "_")
 
     //CSAW
-    val csaw = CSAWCorpus.fromDirectory(new File("raw_data/csaw"))
+    val csaw = CSAWCorpus.fromDirectory(new File(baseDir+"raw_data/csaw"))
     //val testSourceName2 = csaw.name
     //val cs = new PrintWriter("%s-%s-%s.csaw.log".format(testSourceName2,dName,EvalUtils.now()))
 
     //Make the occ filters
-    val redirectTCFileName = if (args.size > 1) args(1) else "data/redirects_tc.tsv" //produced by ExtractCandidateMap
-    val conceptURIsFileName  = if (args.size>2) args(2) else "data/conceptURIs.list" //produced by ExtractCandidateMap
+    val redirectTCFileName = if (args.size > 1) args(1) else baseDir+"data/redirects_tc.tsv" //produced by ExtractCandidateMap
+    val conceptURIsFileName  = if (args.size>2) args(2) else baseDir+"data/conceptURIs.list" //produced by ExtractCandidateMap
     val occFilters = List(UriWhitelistFilter.fromFile(new File(conceptURIsFileName)),RedirectResolveFilter.fromFile(new File(redirectTCFileName)))
 
     val tsvOut = new TSVOutputGenerator(new PrintWriter("%s-%s-%s.milne-witten.log".format(testSourceName, dName, EvalUtils.now())))

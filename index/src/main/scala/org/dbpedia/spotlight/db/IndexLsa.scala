@@ -43,6 +43,7 @@ object IndexLsa {
   private val LOG = LogFactory.getLog(this.getClass)
 
   def main(args: Array[String]) {
+    val baseDir = args(0)
     //TODO: initialize these valuse in main()
     val conf = new Configuration
     val fs = FileSystem.get(conf)
