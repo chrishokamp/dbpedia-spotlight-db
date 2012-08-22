@@ -67,7 +67,7 @@ object IndexEsa {
     //Note: there were problems with garbage collection - put back to Iterator for now
     val resourceMap: Iterator[(DBpediaResource, Array[Token], Array[Double])] =
       //TokenOccurrenceSource.fromJsonFile(new File("raw_data/json/top150-50000docs.json"),
-      TokenOccurrenceSource.fromJsonFile(new File(baseDir+"raw_data/json/top150-filter5.json"),
+      TokenOccurrenceSource.fromJsonFile(new File(baseDir+"raw_data/json/tfidf-top150-filter5.json"),
       //TokenOccurrenceSource.fromJsonFile(new File("raw_data/json/token_counts-20120601-top150.json"),
         tokenStore,
         wikipediaToDBpediaClosure,
@@ -161,7 +161,7 @@ object IndexEsa {
     val dataMap: Iterator[(DBpediaResource, Array[Token], Array[Double])] =
       //TokenOccurrenceSource.fromJsonFile(new File("raw_data/json/top150-50000docs.json"),
       //TokenOccurrenceSource.fromJsonFile(new File("raw_data/json/token_counts-20120601-top150.json"),
-        TokenOccurrenceSource.fromJsonFile(new File(baseDir+"raw_data/json/top150-filter5.json"),
+        TokenOccurrenceSource.fromJsonFile(new File(baseDir+"raw_data/json/tfidf-top150-filter5.json"),
         tokenStore,
         wikipediaToDBpediaClosure,
         resStore
